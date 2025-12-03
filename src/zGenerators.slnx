@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/tests/">
+    <Project Path="tests/zExcelGenerator.Tests/zExcelGenerator.Tests.csproj" Id="a521d1dd-955b-4876-af38-0ae0ad63f424" />
+    <Project Path="tests/zPdfGenerator.Tests/zPdfGenerator.Tests.csproj" Id="a7796711-eaa7-4616-8c2a-4de582096742" />
+  </Folder>
+  <Project Path="zExcelGenerator/zExcelGenerator.csproj" />
+  <Project Path="zPdfGenerator/zPdfGenerator.csproj" />
+</Solution>
