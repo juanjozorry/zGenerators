@@ -4,16 +4,38 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
 	<LangVersion>latest</LangVersion>
+	<Nullable>enable</Nullable>
+  </PropertyGroup>
+	
+  <PropertyGroup>
+	<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+	<PackageId>zPdfGenerator</PackageId>
+	<Version>0.1.0-alpha1</Version>
+	<Authors>Juanjo Jiménez Zorrilla</Authors>
+	<Company>z</Company>
+	<Description>A library for building Excel reports with ClosedXML through a fluent API.</Description>
+	<PackageTags>excel;closedxml;reports;spreadsheet</PackageTags>
+
+	<RepositoryUrl>https://github.com/juanjozorry/zGenerators</RepositoryUrl>
+	<PackageProjectUrl>https://github.com/juanjozorry/zGenerators</PackageProjectUrl>
+
+	<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	<PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Fluid.Core" Version="2.31.0" />
     <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
     <PackageReference Include="itext" Version="9.4.0" />
+    <PackageReference Include="itext.bouncy-castle-adapter" Version="9.4.0" />
+    <PackageReference Include="itext.licensing.base" Version="4.2.4" />
     <PackageReference Include="itext.pdfhtml" Version="6.3.0" />
-    <PackageReference Include="itext7.licensekey" Version="3.1.6" />
     <PackageReference Include="Microsoft.DotNet.PlatformAbstractions" Version="3.1.6" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 
+  <ItemGroup>
+	<None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>	
 </Project>

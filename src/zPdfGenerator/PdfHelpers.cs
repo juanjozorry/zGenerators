@@ -2,6 +2,7 @@
 using iText.Html2pdf;
 using iText.Html2pdf.Attach.Impl;
 using iText.Kernel.Pdf;
+using iText.Licensing.Base;
 using iText.Signatures;
 using System;
 using System.Collections.Generic;
@@ -9,7 +10,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace zPdfGenerator
 {
@@ -71,7 +71,7 @@ namespace zPdfGenerator
         /// <param name="classification">The classification.</param>
         /// <param name="additionalValues">The additional values.</param>
         /// <returns>System.Byte[].</returns>
-        public static byte[] ClassifyPdf(byte[] fileContents, Classification classification, IDictionary<string, string> additionalValues = null)
+        public static byte[] ClassifyPdf(byte[] fileContents, Classification classification, IDictionary<string, string>? additionalValues = null)
         {
             if (fileContents is null || fileContents.Length == 0) throw new NullReferenceException($"{nameof(fileContents)} parameter is mandatory or needs data");
 
@@ -138,7 +138,7 @@ namespace zPdfGenerator
         /// <param name="basePath">The base path.</param>
         /// <param name="cancellationToken">The cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>Returns the PDF as an array of bytes.</returns>
-        public static async Task<byte[]> ConvertHtmlToPDF(string htmlContents, string basePath, CancellationToken cancellationToken)
+        public static byte[] ConvertHtmlToPDF(string htmlContents, string basePath, CancellationToken cancellationToken)
         {
             if (htmlContents is null) throw new NullReferenceException($"{nameof(htmlContents)} parameter is mandatory");
 
@@ -159,8 +159,7 @@ namespace zPdfGenerator
 
                         cancellationToken.ThrowIfCancellationRequested();
 
-                        //TODO: cancel processing if cancellation happens
-                        await Task.Run(() => HtmlConverter.ConvertToPdf(htmlContents, pdfDocument, properties), cancellationToken);
+                        HtmlConverter.ConvertToPdf(htmlContents, pdfDocument, properties);
 
                         pdfDocument.Close();
 
@@ -170,6 +169,26 @@ namespace zPdfGenerator
 
                 return auxStream.ToArray();
             }
+        }
+
+        /// <summary>
+        /// Attempts to load a license file from the specified path and applies it if found.
+        /// </summary>
+        /// <remarks>If the specified file exists, it is loaded and applied as the current license. If the
+        /// file does not exist, the method returns false and no changes are made to the license state.</remarks>
+        /// <param name="licensePath">The file system path to the license file to load. If the file does not exist at this path, no license will
+        /// be loaded.</param>
+        /// <returns>true if the license file was found and loaded; otherwise, false.</returns>
+        public static bool LoadLicenseFile(string licensePath)
+        {
+            bool useLicense = false;
+            if (File.Exists(licensePath ?? string.Empty))
+            {
+                useLicense = true;
+                LicenseKey.LoadLicenseFile(new FileInfo(licensePath));
+            }
+
+            return useLicense;
         }
 
         /// <summary>

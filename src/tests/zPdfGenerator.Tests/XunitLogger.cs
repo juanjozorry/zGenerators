@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Xunit.Abstractions;
 
-namespace zExcelGenerator.Tests
+namespace zPdfGenerator.Tests
 {
     public class XunitLogger<T> : ILogger<T>
     {
