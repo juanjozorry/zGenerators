@@ -19,6 +19,10 @@ This root README provides an overview and links to each component.
 
 ### 1. zExcelGenerator
 
+![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
+![NuGet](https://img.shields.io/nuget/v/zExcelGenerator?color=blue)
+![NuGet (pre)](https://img.shields.io/nuget/vpre/zExcelGenerator?label=nuget-pre&color=orange)
+
 A fluent and highly customizable engine for generating Excel files with ClosedXML.
 
 ✔ Supports:
@@ -35,6 +39,10 @@ A fluent and highly customizable engine for generating Excel files with ClosedXM
 ---
 
 ### 2. zPdfGenerator
+
+![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
+![NuGet](https://img.shields.io/nuget/v/zPdfGenerator?color=blue)
+![NuGet (pre)](https://img.shields.io/nuget/vpre/zPdfGenerator?label=nuget-pre&color=orange)
 
 A modular system for generating PDFs in two different ways:
 
