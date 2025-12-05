@@ -1,0 +1,80 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Reporte Corporativo</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+    <!-- BANNER  -->
+    <div class="hero">
+        <img src="https://images.unsplash.com/photo-1521791055366-0d553872125f?auto=format&fit=crop&w=1500&q=80"
+             alt="Banner corporativo" />
+        <div class="hero-text">
+            <h1>Reporte Corporativo</h1>
+            <p>{{Subtitle}}</p>
+        </div>
+    </div>
+
+    <!-- HIGHLIGHTED SECTION -->
+    <section class="highlight">
+        <h2>Resumen Ejecutivo</h2>
+        <p>
+            Este documento resume la actividad reciente, indicadores clave y conclusiones principales
+            del periodo analizado. Su diseño visual moderno está optimizado para generar PDF
+            de alta calidad.
+        </p>
+    </section>
+
+    <!-- METRICS CARD -->
+    <section class="metrics-grid">
+        {% for m in Metricas %}
+        <div class="metric-card">
+            <h3>{{ m.Title }}</h3>
+            <p class="metric-value">{{ m.Value }}</p>
+        </div>
+        {% endfor %}
+    </section>
+
+    <!-- DATA TABLE -->
+    <section class="data-section">
+        <h2>Detalles de Datos</h2>
+
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Concepto</th>
+                    <th>Valor</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in TableRows %}
+                <tr>
+                    <td>{{ row.Concept }}</td>
+                    <td>{{ row.Value | format_currency: row.Currency, 2 }}</td>
+                    <td>{{ row.Date | date: "%d/%m/%Y" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <!-- COMPLEMENTARY IMAGE -->
+    <section class="image-section">
+        <h2>Gráfico / Imagen Adicional</h2>
+        <img class="inline-image"
+             src="https://images.unsplash.com/photo-1535223289827-42f1e9919769?auto=format&fit=crop&w=1200&q=80"
+             alt="Imagen complementaria" />
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <p>Generado el {{ReportDate | format_date_preset: short}}</p>
+        <p class="small">Documento generado automáticamente</p>
+    </footer>
+
+</body>
+</html>

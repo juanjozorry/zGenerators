@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+	<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+	<PackageId>zExcelGenerator</PackageId>
+	<Version>0.1.0-alpha1</Version>
+	<Authors>Juanjo Jiménez Zorrilla</Authors>
+	<Company>z</Company>
+	<Description>A library for building Excel reports with ClosedXML through a fluent API.</Description>
+	<PackageTags>excel;closedxml;reports;spreadsheet</PackageTags>
+
+	<RepositoryUrl>https://github.com/juanjozorry/zGenerators</RepositoryUrl>
+	<PackageProjectUrl>https://github.com/juanjozorry/zGenerators</PackageProjectUrl>
+
+	<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	<PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ClosedXML" Version="0.105.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.2" />
+  </ItemGroup>
+
+	<ItemGroup>
+		<None Include="README.md" Pack="true" PackagePath="" />
+	</ItemGroup>
+	
+</Project>
