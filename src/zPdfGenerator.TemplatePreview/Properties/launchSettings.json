@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "zPdfGenerator.TemplatePreview": {
+      "commandName": "Project",
+      "commandLineArgs": "preview Sample//Invoice.html --watch --pdf"
+    }
+  }
+}

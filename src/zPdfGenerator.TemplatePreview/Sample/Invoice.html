@@ -1,0 +1,120 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Invoice {{ InvoiceNumber }}</title>
+
+    <!-- CSS external file (recommended for clean templates) -->
+    <link rel="stylesheet" href="Invoice.css" />
+</head>
+
+<body>
+    <header class="header">
+        <div class="brand">
+            <div class="brand__title">{{ Company.Name }}</div>
+            <div class="muted">{{ Company.Address }}</div>
+            <div class="muted">{{ Company.City }}</div>
+            <div class="muted">VAT: {{ Company.Vat }}</div>
+        </div>
+
+        <div class="doc-meta">
+            <div class="doc-meta__title">INVOICE</div>
+            <div class="doc-meta__row"><span class="muted">Number:</span> {{ InvoiceNumber }}</div>
+            <div class="doc-meta__row"><span class="muted">Date:</span> {{ InvoiceDate }}</div>
+            <div class="doc-meta__row"><span class="muted">Due:</span> {{ DueDate }}</div>
+        </div>
+    </header>
+
+    <section class="panel">
+        <div class="panel__title">Bill to</div>
+        <div><strong>{{ Customer.Name }}</strong></div>
+        <div class="muted">{{ Customer.Address }}</div>
+        <div class="muted">{{ Customer.City }}</div>
+        {% if Customer.Email %}
+        <div class="muted">{{ Customer.Email }}</div>
+        {% endif %}
+    </section>
+
+    <section class="panel">
+        <div class="panel__title">Items</div>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th class="col-desc">Description</th>
+                    <th class="col-num">Qty</th>
+                    <th class="col-num">Unit</th>
+                    <th class="col-num">Subtotal</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for line in Lines %}
+                <tr>
+                    <td class="col-desc">
+                        <div class="item-title">{{ line.Description }}</div>
+                        {% if line.Notes %}
+                        <div class="muted small">{{ line.Notes }}</div>
+                        {% endif %}
+                    </td>
+                    <td class="col-num">{{ line.Quantity }}</td>
+                    <td class="col-num">{{ line.UnitPrice }}</td>
+                    <td class="col-num">{{ line.Subtotal }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <section class="grid-2">
+        <div class="panel">
+            <div class="panel__title">Notes</div>
+            <div class="small">{{ Notes }}</div>
+            {% if Payment.Iban %}
+            <div class="muted small mt-2">IBAN: {{ Payment.Iban }}</div>
+            {% endif %}
+            {% if Payment.Bic %}
+            <div class="muted small">BIC: {{ Payment.Bic }}</div>
+            {% endif %}
+        </div>
+
+        <div class="panel totals">
+            <div class="panel__title">Totals</div>
+
+            <div class="totals__row">
+                <div class="muted">Subtotal</div>
+                <div class="totals__value">{{ Totals.Subtotal }}</div>
+            </div>
+
+            {% if Totals.Discount %}
+            <div class="totals__row">
+                <div class="muted">Discount</div>
+                <div class="totals__value">- {{ Totals.Discount }}</div>
+            </div>
+            {% endif %}
+
+            {% if Totals.Tax %}
+            <div class="totals__row">
+                <div class="muted">Tax</div>
+                <div class="totals__value">{{ Totals.Tax }}</div>
+            </div>
+            {% endif %}
+
+            <div class="totals__row totals__row--grand">
+                <div><strong>Total</strong></div>
+                <div class="totals__value"><strong>{{ Totals.GrandTotal }}</strong></div>
+            </div>
+
+            {% if ShowPaidStamp %}
+            <div class="stamp">PAID</div>
+            {% endif %}
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="muted small">
+            Generated on {{ GeneratedAt }} · {{ Company.Name }}
+        </div>
+    </footer>
+</body>
+</html>

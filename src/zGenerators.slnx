@@ -7,5 +7,6 @@
     <Project Path="tests/zPdfGenerator.Tests/zPdfGenerator.Tests.csproj" Id="a7796711-eaa7-4616-8c2a-4de582096742" />
   </Folder>
   <Project Path="zExcelGenerator/zExcelGenerator.csproj" />
+  <Project Path="zPdfGenerator.TemplatePreview/zPdfGenerator.TemplatePreview.csproj" Id="484c18ce-0d08-40cf-ad47-fadcdf5f3762" />
   <Project Path="zPdfGenerator/zPdfGenerator.csproj" />
 </Solution>

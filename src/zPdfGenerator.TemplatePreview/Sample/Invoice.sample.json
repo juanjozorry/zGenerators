@@ -1,0 +1,53 @@
+{
+  "Company": {
+    "Name": "zGenerators Ltd.",
+    "Address": "Gran Via 123",
+    "City": "28013 Madrid, Spain",
+    "Vat": "ESB12345678"
+  },
+
+  "InvoiceNumber": "INV-2025-0007",
+  "InvoiceDate": "12/12/2025",
+  "DueDate": "31/12/2025",
+
+  "Customer": {
+    "Name": "ACME Corp.",
+    "Address": "Calle Falsa 123",
+    "City": "08001 Barcelona, Spain",
+    "Email": "billing@acme.test"
+  },
+
+  "Lines": [
+    {
+      "Description": "Consulting services (December)",
+      "Notes": "On-site workshop + follow-up",
+      "Quantity": 3,
+      "UnitPrice": "500,00 €",
+      "Subtotal": "1.000,00 €"
+    },
+    {
+      "Description": "License subscription (Annual)",
+      "Notes": null,
+      "Quantity": 1,
+      "UnitPrice": "234,56 €",
+      "Subtotal": "234,56 €"
+    }
+  ],
+
+  "Totals": {
+    "Subtotal": "1.234,56 €",
+    "Discount": "50,00 €",
+    "Tax": "0,00 €",
+    "GrandTotal": "1.184,56 €"
+  },
+
+  "Notes": "Payment due within 15 days. Thank you for your business.",
+
+  "Payment": {
+    "Iban": "ES91 2100 0418 4502 0005 1332",
+    "Bic": "CAIXESBBXXX"
+  },
+
+  "ShowPaidStamp": false,
+  "GeneratedAt": "12/12/2025 10:15"
+}
