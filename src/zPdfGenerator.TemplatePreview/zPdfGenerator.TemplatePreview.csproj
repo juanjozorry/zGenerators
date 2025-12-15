@@ -10,8 +10,8 @@
   <PropertyGroup>
 	  <PackAsTool>true</PackAsTool>
 	  <ToolCommandName>zpg-templates</ToolCommandName>
-	  <PackageId>zGenerators.TemplatePreview</PackageId>
-	  <Version>0.1.1-alpha2</Version>
+	  <PackageId>zPdfGenerator.TemplatePreview</PackageId>
+	  <Version>0.1.4-alpha3</Version>
 	  <Authors>Juanjo Jiménez Zorrilla</Authors>
 	  <Company>z</Company>
 	  <Description>Generic HTML (Fluid/Liquid) template preview tool with sample JSON and watch mode.</Description>

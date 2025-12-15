@@ -10,11 +10,11 @@
   <PropertyGroup>
 	<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
 	<PackageId>zPdfGenerator</PackageId>
-	<Version>0.1.1-alpha2</Version>
+	<Version>0.1.4-alpha3</Version>
 	<Authors>Juanjo Jiménez Zorrilla</Authors>
 	<Company>z</Company>
-	<Description>A library for building Excel reports with ClosedXML through a fluent API.</Description>
-	<PackageTags>excel;closedxml;reports;spreadsheet</PackageTags>
+	<Description>A library for building Pdf reports with iText through a fluent API.</Description>
+	<PackageTags>pdf;itext;reports</PackageTags>
 
 	<RepositoryUrl>https://github.com/juanjozorry/zGenerators</RepositoryUrl>
 	<PackageProjectUrl>https://github.com/juanjozorry/zGenerators</PackageProjectUrl>
