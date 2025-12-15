@@ -2,11 +2,14 @@
 using Fluid.Filters;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Threading;
 using zPdfGenerator.Html.FluidFilters;
+using zPdfGenerator.Html.FluidHtmlPlaceHolders;
+using zPdfGenerator.Html.Helpers;
 
 namespace zPdfGenerator.Html
 {
@@ -27,6 +30,41 @@ namespace zPdfGenerator.Html
         /// <param name="cancellationToken">A cancellation token that can be used to cancel the PDF generation operation.</param>
         /// <returns>A byte array containing the generated PDF document. Returns an empty array if the generation fails.</returns>
         byte[] GeneratePdf<T>(Action<FluidHtmlPdfGeneratorBuilder<T>> configure, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Generates a PDF document from the specified model using the provided configuration action.
+        /// </summary>
+        /// <param name="templatePath">The path to the template</param>
+        /// <param name="licensePath">The path to the license file</param>
+        /// <param name="model">The model used to populate the template</param>
+        /// <param name="culture">The culture</param>
+        /// <param name="cancellationToken">A cancellation token that can be used to cancel the PDF generation operation.</param>
+        /// <returns>A byte array containing the generated PDF document. Returns an empty array if the generation fails.</returns>
+        byte[] GeneratePdf(string templatePath, string? licensePath, IDictionary<string, object?> model, CultureInfo culture, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Renders an HTML template located at the specified path using the provided data, placeholders, and culture.
+        /// </summary>
+        /// <typeparam name="T">The type for the data</typeparam>
+        /// <param name="templatePath">The path to the template</param>
+        /// <param name="data">The data</param>
+        /// <param name="placeholders">The placeholders collection</param>
+        /// <param name="culture">TE culture to use</param>
+        /// <param name="ct">A cancellation token</param>
+        /// <returns></returns>
+        string RenderHtml<T>(string templatePath, T data, IEnumerable<BasePlaceHolder<T>> placeholders,
+            CultureInfo culture, CancellationToken ct = default);
+
+        /// <summary>
+        /// Renders an HTML template located at the specified path using the provided model and culture.
+        /// </summary>
+        /// <param name="templatePath">The path to the template</param>
+        /// <param name="model">The model used to populate the template</param>
+        /// <param name="culture">The culture</param>
+        /// <param name="cancellationToken">A cancellation token</param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        string RenderHtml(string templatePath, IDictionary<string, object?> model, CultureInfo culture, CancellationToken cancellationToken = default);
     }
 
     /// <summary>
@@ -103,7 +141,7 @@ namespace zPdfGenerator.Html
 
                 _logger.LogInformation("About to load template from {TemplatePath} with culture {Culture}", builder.TemplatePath, builder.CultureInfo.Name);
 
-                var renderedTemplate = RenderTemplate(builder, cancellationToken);
+                var renderedTemplate = RenderHtml(builder.TemplatePath, builder.DataItem, builder.PlaceHolders, builder.CultureInfo, cancellationToken);
 
                 _logger.LogDebug("Template after {Template}", renderedTemplate);
 
@@ -128,19 +166,109 @@ namespace zPdfGenerator.Html
             }
         }
 
-        private string? RenderTemplate<T>(FluidHtmlPdfGeneratorBuilder<T> builder, CancellationToken cancellationToken)
+        /// <summary>
+        /// Generates a PDF document from the specified model using the provided configuration action.
+        /// </summary>
+        /// <param name="templatePath">The path to the template</param>
+        /// <param name="licensePath">The path to the license file</param>
+        /// <param name="model">The model used to populate the template</param>
+        /// <param name="culture">The culture</param>
+        /// <param name="cancellationToken">A cancellation token that can be used to cancel the PDF generation operation.</param>
+        /// <returns>A byte array containing the generated PDF document. Returns an empty array if the generation fails.</returns>
+        public byte[] GeneratePdf(string templatePath, string? licensePath, IDictionary<string, object?> model, CultureInfo culture, CancellationToken cancellationToken = default)
         {
-            var templateText = File.ReadAllText(builder.TemplatePath);
+            if (string.IsNullOrWhiteSpace(templatePath))
+                throw new InvalidOperationException("TemplatePath must be configured.");
+
+            if (model is null)
+                throw new InvalidOperationException("Model must be set up.");
+
+            _logger.LogInformation("Starting PDF form generation using template {TemplatePath}.", templatePath);
+
+            if (!PdfHelpers.LoadLicenseFile(licensePath))
+            {
+                _logger.LogWarning("No license file found or wrong path. Using itext AGPL mode.");
+            }
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var threadCulture = CultureInfo.CurrentCulture;
+            var threadUICulture = CultureInfo.CurrentUICulture;
+
+            try
+            {
+
+                CultureInfo.CurrentCulture = culture;
+                CultureInfo.CurrentUICulture = culture;
+
+                _logger.LogInformation("Starting the population for the template {TemplatePath)}", Path.GetFileName(templatePath));
+
+                var sw = Stopwatch.StartNew();
+
+                _logger.LogInformation("About to load template from {TemplatePath} with culture {Culture}", templatePath, culture.Name);
+
+                var renderedTemplate = RenderHtml(templatePath, model, culture, cancellationToken);
+
+                _logger.LogDebug("Template after {Template}", renderedTemplate);
+
+                _logger.LogInformation("Finished the population for the template {TemplatePath} in {ElapsedMilliseconds} ms", Path.GetFileName(templatePath), sw.ElapsedMilliseconds);
+
+                if (renderedTemplate is null)
+                    throw new InvalidOperationException("Rendered template cannot be null");
+
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var basePath = Path.GetDirectoryName(templatePath) ?? AppContext.BaseDirectory;
+                var pdf = _htmlToPdfConverter.ConvertHtmlToPDF(renderedTemplate, basePath, cancellationToken);
+
+                _logger.LogInformation("Finished the conversion to PDF in {ElapsedMilliseconds} ms", sw.ElapsedMilliseconds);
+
+                return pdf;
+            }
+            finally
+            {
+                CultureInfo.CurrentCulture = threadCulture;
+                CultureInfo.CurrentUICulture = threadUICulture;
+            }
+        }
+
+        /// <summary>
+        /// Renders an HTML template located at the specified path using the provided data, placeholders, and culture.
+        /// </summary>
+        /// <typeparam name="T">The type for the data</typeparam>
+        /// <param name="templatePath">The path to the template</param>
+        /// <param name="data">The data</param>
+        /// <param name="placeholders">The placeholders collection</param>
+        /// <param name="culture">TE culture to use</param>
+        /// <param name="ct">A cancellation token</param>
+        /// <returns></returns>
+        public string RenderHtml<T>(string templatePath, T data, IEnumerable<BasePlaceHolder<T>> placeholders, CultureInfo culture, CancellationToken ct = default)
+        {
+            var model = BuildModel(data, placeholders, culture);
+            return RenderHtml(templatePath, model, culture, ct);
+        }
+
+        /// <summary>
+        /// Renders an HTML template located at the specified path using the provided model and culture.
+        /// </summary>
+        /// <param name="templatePath">The path to the template</param>
+        /// <param name="model">The model used to populate the template</param>
+        /// <param name="culture">The culture</param>
+        /// <param name="cancellationToken">A cancellation token</param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        public string RenderHtml(string templatePath, IDictionary<string, object?> model, CultureInfo culture, CancellationToken cancellationToken = default)
+        {
+            var templateText = File.ReadAllText(templatePath);
             var parser = new FluidParser();
 
             if (!parser.TryParse(templateText, out var template, out var error))
             {
-                throw new InvalidOperationException($"Error parsing template '{builder.TemplatePath}': {error}");
+                throw new InvalidOperationException($"Error parsing template '{templatePath}': {error}");
             }
 
             var options = new TemplateOptions
             {
-                CultureInfo = builder.CultureInfo
+                CultureInfo = culture
             };
 
             // Register custom filters
@@ -148,43 +276,44 @@ namespace zPdfGenerator.Html
             options.Filters.WithBusinessFilters();
             options.Filters.WithDateFilters();
 
-            options.MemberAccessStrategy.Register<T>();
-            var context = new TemplateContext(options)
+            // Registers collections and lists for object graph
+            options.MemberAccessStrategy.Register<IDictionary<string, object?>>();
+            options.MemberAccessStrategy.Register<IReadOnlyDictionary<string, object?>>();
+            options.MemberAccessStrategy.Register<List<object?>>();
+
+            // Dynamic registration
+            FluidModelRegistration.RegisterModelTypes(options, model);
+
+            // Register the main model type
+            var context = new TemplateContext(model, options)
             {
                 CultureInfo = options.CultureInfo
             };
 
-            context.SetValue("Model", builder.DataItem!);
-
-            foreach (var ph in builder.PlaceHolders)
-            {
-                var value = ph.ProcessValue(builder.DataItem!, options.CultureInfo);
-
-                // We need to register the types in case of collections so that Fluid can access their members
-                if (value is System.Collections.IEnumerable enumerable && value is not string)
-                {
-                    foreach (var item in enumerable)
-                    {
-                        if (item == null) continue;
-                        var itemType = item.GetType();
-                        options.MemberAccessStrategy.Register(itemType);
-                        break;
-                    }
-                }
-                else if (value is not null)
-                {
-                    var type = value.GetType();
-                    if (!type.IsPrimitive && type != typeof(string))
-                    {
-                        options.MemberAccessStrategy.Register(type);
-                    }
-                }
-                context.SetValue(ph.Name, value);
-            }
+            context.SetValue("Model", model);
 
             cancellationToken.ThrowIfCancellationRequested();
 
             return template.Render(context);
+        }
+
+        private static Dictionary<string, object?> BuildModel<T>(T data, IEnumerable<BasePlaceHolder<T>> placeholders, CultureInfo culture)
+        {
+            var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var ph in placeholders)
+            {
+                if (dict.ContainsKey(ph.Name))
+                {
+                    throw new InvalidOperationException($"Duplicate placeholder name '{ph.Name}'. Placeholder names must be unique.");
+                }
+
+                dict[ph.Name] = ph.ProcessValue(data, culture);
+            }
+
+            dict["Model"] = data;
+
+            return dict;
         }
     }
 }

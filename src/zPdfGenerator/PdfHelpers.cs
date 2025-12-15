@@ -179,7 +179,7 @@ namespace zPdfGenerator
         /// <param name="licensePath">The file system path to the license file to load. If the file does not exist at this path, no license will
         /// be loaded.</param>
         /// <returns>true if the license file was found and loaded; otherwise, false.</returns>
-        public static bool LoadLicenseFile(string licensePath)
+        public static bool LoadLicenseFile(string? licensePath)
         {
             bool useLicense = false;
             if (File.Exists(licensePath ?? string.Empty))
