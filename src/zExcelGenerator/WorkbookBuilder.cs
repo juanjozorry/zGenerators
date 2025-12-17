@@ -111,7 +111,7 @@ namespace zExcelGenerator
         /// Column expanding to more physical columns (ExcelMultipleColumnMapper).
         /// </summary>
         public WorksheetBuilder<T> MultipleColumns(string description, Func<T, IEnumerable<object>> selector,
-            int totalColumns, int order, IEnumerable<string> headerSuffix = null,
+            int totalColumns, int order, IEnumerable<string>? headerSuffix = null,
             string format = "@", XLAlignmentHorizontalValues alignment = XLAlignmentHorizontalValues.Left)
         {
             if (string.IsNullOrWhiteSpace(description))
@@ -149,8 +149,8 @@ namespace zExcelGenerator
             Func<T, IEnumerable<object>> secondSelector,
             int totalColumns,
             int order,
-            IEnumerable<string> firstHeaderSuffix = null,
-            IEnumerable<string> secondHeaderSuffix = null,
+            IEnumerable<string>? firstHeaderSuffix = null,
+            IEnumerable<string>? secondHeaderSuffix = null,
             string firstFormat = "@",
             string secondFormat = "@",
             XLAlignmentHorizontalValues alignment = XLAlignmentHorizontalValues.Left,

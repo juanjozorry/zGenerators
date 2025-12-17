@@ -9,19 +9,19 @@ It provides two high-level generators:
 
 ---
 
-## 📌 Available Generators
+## Available Generators
 
-### **1️⃣ FormPdfGenerator (AcroForm PDF filler)**
+### **1️ FormPdfGenerator (AcroForm PDF filler)**
 Fills existing **PDF form templates (AcroForms)** with strongly-typed data models using a fluent builder and placeholder system.
 
-### **2️⃣ FluidHtmlPdfGenerator (HTML → PDF renderer)**
+### **2️ FluidHtmlPdfGenerator (HTML → PDF renderer)**
 Will generate PDF documents from **Fluid HTML templates** and a strongly typed model.
 
 ---
 
-# ✨ Features
+# Features
 
-### ✔️ Shared features (both generators)
+### Shared features (both generators)
 - Fluent API with strongly-typed placeholders  
 - Automatic culture-aware formatting (dates, numbers, currencies)  
 - Based on .NET 6+  
@@ -32,7 +32,7 @@ Will generate PDF documents from **Fluid HTML templates** and a strongly typed m
 
 ---
 
-# 📦 Installation
+# Installation
 
 ```bash
 dotnet add package zPdfGenerator
@@ -53,7 +53,7 @@ dotnet add package FluidCore
 
 ---
 
-# 🚀 FormPdfGenerator
+# FormPdfGenerator
 
 `FormPdfGenerator` fills PDF **AcroForms** using a fluent builder and placeholder mapping.
 
@@ -99,9 +99,9 @@ File.WriteAllBytes("ContractCompleted.pdf", bytes);
 
 ---
 
-# 📚 Examples of Use
+# Examples of Use
 
-## 📌 Example 1: Basic text fields
+## Example 1: Basic text fields
 
 ```csharp
 builder
@@ -111,7 +111,7 @@ builder
     .AddText("Notes", o => o.Comments);
 ```
 
-## 📌 Example 2: Date formatting with culture
+## Example 2: Date formatting with culture
 
 ```csharp
 builder
@@ -120,7 +120,7 @@ builder
     .AddDate("ExpiryDate", o => o.ExpiresAt, "dd/MM/yyyy");
 ```
 
-## 📌 Example 3: Numeric formatting
+## Example 3: Numeric formatting
 
 ```csharp
 builder
@@ -129,7 +129,7 @@ builder
     .AddNumeric("TaxRate", o => o.TaxRate, "P1");
 ```
 
-## 📌 Example 4: Composite numeric + text placeholder
+## Example 4: Composite numeric + text placeholder
 
 ```csharp
 builder.AddNumericAndText(
@@ -139,13 +139,13 @@ builder.AddNumericAndText(
 );
 ```
 
-## 📌 Example 5: Removing form fields dynamically
+## Example 5: Removing form fields dynamically
 
 ```csharp
 builder.AddFormElementsToRemove("DebugField", "UnusedField");
 ```
 
-## 📌 Example 6: Full configuration
+## Example 6: Full configuration
 
 ```csharp
 var pdfBytes = generator.GeneratePdf<Invoice>(builder =>
@@ -171,7 +171,7 @@ var pdfBytes = generator.GeneratePdf<Invoice>(builder =>
 
 ---
 
-# 🧠 Placeholder System Overview
+# Placeholder System Overview
 
 | Placeholder Type | Maps From | Output |
 |------------------|-----------|--------|
@@ -182,7 +182,7 @@ var pdfBytes = generator.GeneratePdf<Invoice>(builder =>
 
 ---
 
-# 🧪 Unit Testing
+# Unit Testing
 
 Creating a template programmatically:
 
@@ -205,11 +205,11 @@ string name = fields["Name"].GetValueAsString();
 
 ---
 
-# 🚀 FluidHtmlPdfGenerator 
+# FluidHtmlPdfGenerator 
 
-The future HTML engine will render PDFs directly from a Fluid HTML templates.
+The future HTML engine renders PDFs directly from a Fluid HTML templates.
 
-### Planned features
+### Features
 
 - Fluid support  
 - Strongly typed model binding  
@@ -217,7 +217,7 @@ The future HTML engine will render PDFs directly from a Fluid HTML templates.
 - Embedded assets (CSS, fonts, images)  
 - Page layout configuration (margins, headers, footers)  
 
-### Planned example
+### Example
 
 ```csharp
 var pdf = new FluidHtmlPdfGenerator(logger, new HtmlToPdfConverter());
@@ -233,9 +233,9 @@ byte[] output = pdf.GeneratePdf(model, builder =>
 
 ---
 
-# ⚙️ Requirements
+# Requirements
 
-- .NET 6 or later  
+- netstandard 2.1 or higher (compatible with .NET and .NET Framework 4.7.2+)  
 - iText 8  
 - BouncyCastle Adapter  
 - A fillable PDF AcroForm template (for FormPdfGenerator)
@@ -243,15 +243,15 @@ byte[] output = pdf.GeneratePdf(model, builder =>
 
 ---
 
-# 📄 License
+# License
 
 MIT License for this library.
 
-✔ iText itself is AGPL unless you have a commercial license.  
+iText itself is AGPL unless you have a commercial license.  
 
 ---
 
-# 🤝 Contributing
+# Contributing
 
 1. Fork the repository  
 2. Create a feature branch  
@@ -260,7 +260,7 @@ MIT License for this library.
 
 ---
 
-# 💬 Support
+# Support
 
 Open an issue if you need help with:
 

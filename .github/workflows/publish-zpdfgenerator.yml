@@ -100,3 +100,52 @@ jobs:
             --api-key "${{ secrets.NUGET_API_KEY }}" \
             --source "$NUGET_SOURCE" \
             --skip-duplicate
+
+  publish-charts:
+    needs: publish-core
+    runs-on: ubuntu-latest
+
+    env:
+      PROJECT_PATH: src/zPdfGenerator.Charts/zPdfGenerator.Charts.csproj
+      NUGET_SOURCE: https://api.nuget.org/v3/index.json
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Derive version from tag
+        id: ver
+        shell: bash
+        run: |
+          TAG_NAME="${GITHUB_REF_NAME}"
+          VERSION="${TAG_NAME#zPdfGenerator-v}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Restore
+        run: dotnet restore $PROJECT_PATH
+
+      - name: Build
+        run: dotnet build $PROJECT_PATH -c Release --no-restore
+
+      - name: Pack charts (force PackageReference)
+        run: |
+          dotnet pack $PROJECT_PATH \
+            -c Release \
+            --no-build \
+            -p:PackageVersion=${{ steps.ver.outputs.version }} \
+            -p:Version=${{ steps.ver.outputs.version }} \
+            -p:UseProjectRefs=false \
+            -p:ZPdfGeneratorVersion=${{ steps.ver.outputs.version }} \
+            -o ./artifacts/charts
+
+      - name: Push charts to NuGet.org
+        run: |
+          dotnet nuget push "./artifacts/charts/*.nupkg" \
+            --api-key "${{ secrets.NUGET_API_KEY }}" \
+            --source "$NUGET_SOURCE" \
+            --skip-duplicate

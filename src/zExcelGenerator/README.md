@@ -9,7 +9,7 @@ Designed for clean, expressive, multi-sheet Excel report generation with support
 
 ---
 
-## 📑 Table of Contents
+## Table of Contents
 
 - [Features](#-features)
 - [Installation](#-installation)
@@ -25,19 +25,19 @@ Designed for clean, expressive, multi-sheet Excel report generation with support
 
 ---
 
-## ✨ Features
+## Features
 
-- 🚀 Fluent API for building Excel reports  
-- 📄 Multi-worksheet support  
-- 🔢 Simple and advanced column mappings  
-- 🧩 Multiple-column and paired-column expansions  
-- ⚙️ Works with `ILogger<T>`  
-- ⏳ Supports `CancellationToken`  
-- 🌐 Compatible with `netstandard2.1`  
+- Fluent API for building Excel reports  
+- Multi-worksheet support  
+- Simple and advanced column mappings  
+- Multiple-column and paired-column expansions  
+- Works with `ILogger<T>`  
+- Supports `CancellationToken`  
+- Compatible with `netstandard2.1`  
 
 ---
 
-## 📦 Installation
+## Installation
 
 ```bash
 dotnet add package zExcelGenerator
@@ -45,7 +45,7 @@ dotnet add package zExcelGenerator
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ```csharp
 var logger = new NullLogger<ExcelGenerator>();
@@ -63,7 +63,7 @@ byte[] excelBytes = generator.GenerateExcel(workbook =>
 
 ---
 
-## 📚 Usage Examples
+## Usage Examples
 
 ### Simple Columns
 
