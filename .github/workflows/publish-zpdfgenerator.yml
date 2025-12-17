@@ -6,7 +6,7 @@ on:
       - 'zPdfGenerator-v*'    # ej: zPdfGenerator-v1.2.3
 
 jobs:
-  publish:
+  publish-core:
     runs-on: ubuntu-latest
 
     env:
@@ -37,7 +37,66 @@ jobs:
         run: dotnet build $PROJECT_PATH --configuration Release --no-restore
 
       - name: Pack
-        run: dotnet pack $PROJECT_PATH --configuration Release --no-build -o ./artifacts /p:PackageVersion=${{ steps.version.outputs.version }}
+        run: |
+          dotnet pack $PROJECT_PATH \
+            --configuration Release \
+            --no-build \
+            -p:PackageVersion=${{ steps.version.outputs.version }} \
+            -p:Version=${{ steps.ver.outputs.version }} \
+            -o ./artifacts/core
 
       - name: Push to NuGet
-        run: dotnet nuget push "artifacts/*.nupkg" --api-key "${{ secrets.NUGET_API_KEY }}" --source "$NUGET_SOURCE" --skip-duplicate
+        run: | 
+          dotnet nuget push "./artifacts/core/*.nupkg" \
+            --api-key "${{ secrets.NUGET_API_KEY }}" \
+            --source "$NUGET_SOURCE" \
+            --skip-duplicate
+
+  publish-tools:
+    needs: publish-core
+    runs-on: ubuntu-latest
+
+    env:
+      PROJECT_PATH: src/zPdfGenerator.TemplatePreview/zPdfGenerator.TemplatePreview.csproj
+      NUGET_SOURCE: https://api.nuget.org/v3/index.json
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Derive version from tag
+        id: ver
+        shell: bash
+        run: |
+          TAG_NAME="${GITHUB_REF_NAME}"
+          VERSION="${TAG_NAME#zPdfGenerator-v}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Restore
+        run: dotnet restore $PROJECT_PATH
+
+      - name: Build
+        run: dotnet build $PROJECT_PATH -c Release --no-restore
+
+      - name: Pack tools (force PackageReference)
+        run: |
+          dotnet pack $PROJECT_PATH \
+            -c Release \
+            --no-build \
+            -p:PackageVersion=${{ steps.ver.outputs.version }} \
+            -p:Version=${{ steps.ver.outputs.version }} \
+            -p:UseProjectRefs=false \
+            -p:ZPdfGeneratorVersion=${{ steps.ver.outputs.version }} \
+            -o ./artifacts/tools
+
+      - name: Push tools to NuGet.org
+        run: |
+          dotnet nuget push "./artifacts/tools/*.nupkg" \
+            --api-key "${{ secrets.NUGET_API_KEY }}" \
+            --source "$NUGET_SOURCE" \
+            --skip-duplicate
