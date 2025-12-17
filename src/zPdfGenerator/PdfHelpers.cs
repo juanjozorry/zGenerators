@@ -37,7 +37,7 @@ namespace zPdfGenerator
     /// <summary>
     /// Class PdfHelpers. This class contains helpres methods
     /// </summary>
-    public static class PdfHelpers
+    internal static class PdfHelpers
     {
         /// <summary>
         /// Checks the PDF number of signers.

@@ -180,8 +180,8 @@ namespace zExcelGenerator
 
                     if (item is ExcelMultipleTwoColumnsMapper<T> twomi)
                     {
-                        var data = twomi.FieldValue(currentValue);
-                        var secondColumnData = twomi.SecondColumnFieldValue(currentValue);
+                        var data = twomi.FieldValue?.Invoke(currentValue);
+                        var secondColumnData = twomi.SecondColumnFieldValue?.Invoke(currentValue);
                         for (int i = 0; i < twomi.TotalColumns; i++)
                         {
                             cancellationToken.ThrowIfCancellationRequested();
@@ -197,7 +197,7 @@ namespace zExcelGenerator
                     }
                     else if (item is ExcelMultipleColumnMapper<T> mi)
                     {
-                        var data = mi.FieldValue(currentValue);
+                        var data = mi.FieldValue?.Invoke(currentValue);
                         for (int i = 0; i < mi.TotalColumns; i++)
                         {
                             cancellationToken.ThrowIfCancellationRequested();
@@ -208,8 +208,8 @@ namespace zExcelGenerator
                     }
                     else if (item is ExcelColumnMapper<T> i)
                     {
-                        var data = i.FieldValue(currentValue);
-                        SetCellValue(worksheet.Cell(row + topGap, column), data, i.Format, i.AlignmentHorizontal);
+                        var data = i.FieldValue?.Invoke(currentValue);
+                        if (data is not null) SetCellValue(worksheet.Cell(row + topGap, column), data, i.Format, i.AlignmentHorizontal);
                         column++;
                     }
                 }
@@ -313,7 +313,7 @@ namespace zExcelGenerator
         /// <param name="value">The value.</param>
         /// <param name="format">The format.</param>
         /// <param name="alignmentHorizontal">The alignmentHorizontal</param>
-        private void SetCellValue(IXLCell cell, object value, string format, XLAlignmentHorizontalValues alignmentHorizontal)
+        private void SetCellValue(IXLCell cell, object value, string? format, XLAlignmentHorizontalValues alignmentHorizontal)
         {
             if (cell is not null)
             {

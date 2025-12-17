@@ -1,5 +1,9 @@
 ﻿# zPdfGenerator.TemplatePreview
 
+![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
+![NuGet](https://img.shields.io/nuget/v/zPdfGenerator.TemplatePreview?color=blue)
+![NuGet (pre)](https://img.shields.io/nuget/vpre/zPdfGenerator.TemplatePreview?label=nuget-pre&color=orange)
+
 `zPdfGenerator.TemplatePreview` is a **.NET global tool** that provides a fast and generic way to **preview HTML templates** rendered with **Fluid (Liquid syntax)** using sample JSON data.
 
 It is designed to help you **author, debug, and iterate** on HTML templates that will later be converted to PDF (for example using `zPdfGenerator`), without having to write code or regenerate PDFs constantly.

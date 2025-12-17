@@ -20,14 +20,14 @@ namespace zExcelGenerator.Tests
         // Simple test models
         private class Person
         {
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
             public int Age { get; set; }
             public DateTime BirthDate { get; set; }
         }
 
         private class SurveyResult
         {
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
             public List<int> Scores { get; set; } = new();
         }
 

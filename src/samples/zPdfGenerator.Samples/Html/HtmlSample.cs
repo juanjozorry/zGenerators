@@ -40,17 +40,21 @@ namespace zPdfGenerator.Samples.Html
                 }
             };
 
-            var fileContents = _generator.GeneratePdf<CorporateReport>(configure =>
-                configure
-                    .UseTemplatePath(Path.Combine(AppContext.BaseDirectory, "Html", "template.html"))
-                    .UseCulture(new CultureInfo("es-ES"))
-                    .SetData(report)
-                    .AddText("Subtitle", i => i.Subtitle)
-                    .AddDate("ReportDate", i => i.Date)
-                    .AddCollection("Metrics", i => i.Metrics)
-                    .AddCollection("TableRows", i => i.TableRows));
+            Action<FluidHtmlPdfGeneratorBuilder<CorporateReport>> config = b => b
+                .UseTemplatePath(Path.Combine(AppContext.BaseDirectory, "Html", "template.html"))
+                .UseCulture(new CultureInfo("es-ES"))
+                .SetData(report)
+                .AddText("Subtitle", i => i.Subtitle)
+                .AddDate("ReportDate", i => i.Date)
+                .AddCollection("Metrics", i => i.Metrics)
+                .AddCollection("TableRows", i => i.TableRows)
+                .AddPieChart("chartSvg", i => i.TableRows, r => r.Concept, r => Convert.ToDouble(r.Value), "Prueba de tarta", "Leyenda", "{0:n0}", "{1}", paletteHex: new[] { "#2563EB", "#F59E0B", "#16A34A" }, overrideGlobalCultureInfo: new CultureInfo("en-US"));
 
-            File.WriteAllBytes(Path.Combine(AppContext.BaseDirectory, "SampleHtml.pdf"), fileContents);
+            var htmlFileContents = _generator.RenderHtml<CorporateReport>(config);
+            var pdfFileContents = _generator.GeneratePdf<CorporateReport>(config);
+
+            await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Html\\SampleHtml.html"), htmlFileContents);
+            await File.WriteAllBytesAsync(Path.Combine(AppContext.BaseDirectory, "Html\\SampleHtml.pdf"), pdfFileContents);
 
             _logger.LogInformation("Finishing PoC");
         }

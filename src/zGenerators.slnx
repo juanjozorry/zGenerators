@@ -1,4 +1,8 @@
 <Solution>
+  <Folder Name="/pipelines/">
+    <File Path="../.github/workflows/publish-zexcelgenerator.yml" />
+    <File Path="../.github/workflows/publish-zpdfgenerator.yml" />
+  </Folder>
   <Folder Name="/samples/">
     <Project Path="samples/zPdfGenerator.Samples/zPdfGenerator.Samples.csproj" Id="f335fbde-59a7-4db5-acf3-aa9dec8f1ae7" />
   </Folder>
@@ -7,6 +11,7 @@
     <Project Path="tests/zPdfGenerator.Tests/zPdfGenerator.Tests.csproj" Id="a7796711-eaa7-4616-8c2a-4de582096742" />
   </Folder>
   <Project Path="zExcelGenerator/zExcelGenerator.csproj" />
+  <Project Path="zPdfGenerator.Charts/zPdfGenerator.Charts.csproj" Id="49479836-bda7-45e1-baf1-b3fc8508b7f4" />
   <Project Path="zPdfGenerator.TemplatePreview/zPdfGenerator.TemplatePreview.csproj" Id="484c18ce-0d08-40cf-ad47-fadcdf5f3762" />
   <Project Path="zPdfGenerator/zPdfGenerator.csproj" />
 </Solution>

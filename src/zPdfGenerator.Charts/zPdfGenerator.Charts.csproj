@@ -6,14 +6,14 @@
 	<LangVersion>latest</LangVersion>
 	<Nullable>enable</Nullable>
   </PropertyGroup>
-	
+
   <PropertyGroup>
 	<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-	<PackageId>zPdfGenerator</PackageId>
+	<PackageId>zPdfGenerator.Charts</PackageId>
 	<Version>0.1.4-alpha3</Version>
 	<Authors>Juanjo Jiménez Zorrilla</Authors>
 	<Company>z</Company>
-	<Description>A library for building Pdf reports with iText through a fluent API.</Description>
+	<Description>A library for building charts for Pdf reports with iText through a fluent API.</Description>
 	<PackageTags>pdf;itext;reports</PackageTags>
 
 	<RepositoryUrl>https://github.com/juanjozorry/zGenerators</RepositoryUrl>
@@ -21,20 +21,25 @@
 
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
-	<UserSecretsId>e8bb63bd-be67-4e41-b3b8-f65c9c4fd88c</UserSecretsId>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Fluid.Core" Version="2.31.0" />
-    <PackageReference Include="itext" Version="9.4.0" />
-    <PackageReference Include="itext.bouncy-castle-adapter" Version="9.4.0" />
-    <PackageReference Include="itext.licensing.base" Version="4.2.4" />
-    <PackageReference Include="itext.pdfhtml" Version="6.3.0" />
-	<PackageReference Include="Microsoft.Extensions.DependencyModel" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.3" />
+  <PropertyGroup>
+	<UseProjectRefs>true</UseProjectRefs>
+	<ZPdfGeneratorVersion>0.1.4</ZPdfGeneratorVersion>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(UseProjectRefs)' == 'true'">
+    <ProjectReference Include="..\zPdfGenerator\zPdfGenerator.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UseProjectRefs)' != 'true'">
+    <PackageReference Include="zPdfGenerator" Version="$(ZPdfGeneratorVersion)" />
   </ItemGroup>
 
   <ItemGroup>
-	<None Include="README.md" Pack="true" PackagePath="" />
-  </ItemGroup>	
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OxyPlot.Core" Version="2.2.0" />
+  </ItemGroup>
 </Project>
