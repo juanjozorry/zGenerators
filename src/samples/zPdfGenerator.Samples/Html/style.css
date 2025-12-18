@@ -126,6 +126,62 @@ h2 {
     }
 
 /* ================================
+   CHARTS
+================================ */
+.chart-section {
+    page-break-inside: avoid;
+}
+
+.chart-row {
+    display: flex;
+    gap: 16px;
+}
+
+.chart-text {
+    flex: 1;
+}
+
+.chart-graphic {
+    flex: 1.2;
+}
+
+.z-chart {
+    border: 1px solid #ccc;
+    padding: 12px;
+    margin-top: 10px;
+    background-color: #fafafa;
+}
+
+.z-chart svg {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.z-chart svg text {
+    font-family: Inter, Arial, sans-serif !important;
+    font-size: 12px !important;
+    fill: #222 !important;
+}
+
+z-chart .slice-0 {
+    fill: #16a3 !important;
+}
+
+.z-chart .slice-1 {
+    fill: #f59e !important;
+}
+
+.z-chart .slice-2 {
+    fill: #ef44 !important;
+}
+
+.z-chart .slice {
+    stroke: #fff !important;
+    stroke-width: 1px !important;
+}
+
+/* ================================
    COMPLEMENTARY IMAGE
 ================================ */
 

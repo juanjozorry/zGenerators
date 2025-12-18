@@ -1,6 +1,6 @@
-﻿using System;
+﻿using ClosedXML.Excel;
+using System;
 using System.Collections.Generic;
-using ClosedXML.Excel;
 
 namespace zExcelGenerator
 {
@@ -19,7 +19,7 @@ namespace zExcelGenerator
         /// Gets or sets the description.
         /// </summary>
         /// <value>The description.</value>
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         /// <summary>
         /// Gets or sets the format in the resulting report.
@@ -46,7 +46,7 @@ namespace zExcelGenerator
         /// Gets or sets the field value. This is a function used to resolve the value for a given column.
         /// </summary>
         /// <value>The field value.</value>
-        public Func<T, object> FieldValue { get; set; }
+        public Func<T, object>? FieldValue { get; set; }
     }
 
     /// <summary>
@@ -61,13 +61,13 @@ namespace zExcelGenerator
         /// Gets or sets the header description suffix.
         /// </summary>
         /// <value>The header description suffix.</value>
-        public IEnumerable<string> HeaderDescriptionSuffix { get; set; }
+        public IEnumerable<string>? HeaderDescriptionSuffix { get; set; }
 
         /// <summary>
         /// Gets or sets the field value. This is a function used to resolve the value for a given column.
         /// </summary>
         /// <value>The field value.</value>
-        public new Func<T, IEnumerable<object>> FieldValue { get; set; }
+        public new Func<T, IEnumerable<object>>? FieldValue { get; set; }
 
         /// <summary>
         /// Gets or sets the total columns.
@@ -94,24 +94,24 @@ namespace zExcelGenerator
         /// Gets or sets the second column field value.
         /// </summary>
         /// <value>The second column field value.</value>
-        public Func<T, IEnumerable<object>> SecondColumnFieldValue { get; set; }
+        public Func<T, IEnumerable<object>>? SecondColumnFieldValue { get; set; }
 
         /// <summary>
         /// Gets or sets the second column description.
         /// </summary>
         /// <value>The second column description.</value>
-        public string SecondColumnDescription { get; set; }
+        public string? SecondColumnDescription { get; set; }
 
         /// <summary>
         /// Gets or sets the second column header description suffix.
         /// </summary>
         /// <value>The second column header description suffix.</value>
-        public IEnumerable<string> SecondColumnHeaderDescriptionSuffix { get; set; }
+        public IEnumerable<string>? SecondColumnHeaderDescriptionSuffix { get; set; }
 
         /// <summary>
         /// Gets or sets the second column format.
         /// </summary>
         /// <value>The second column format.</value>
-        public string SecondColumnFormat { get; set; }
+        public string? SecondColumnFormat { get; set; }
     }
 }

@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Threading;
+using zPdfGenerator.Globalization;
 using zPdfGenerator.Html.FluidFilters;
 using zPdfGenerator.Html.FluidHtmlPlaceHolders;
 using zPdfGenerator.Html.Helpers;
@@ -45,11 +46,20 @@ namespace zPdfGenerator.Html
         /// <summary>
         /// Renders an HTML template located at the specified path using the provided data, placeholders, and culture.
         /// </summary>
+        /// <typeparam name="T">The type of the model to be rendered in the PDF document.</typeparam>
+        /// <param name="configure">An action that configures the PDF generation process for the specified model type.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used to cancel the PDF generation operation.</param>
+        /// <returns></returns>
+        string RenderHtml<T>(Action<FluidHtmlPdfGeneratorBuilder<T>> configure, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Renders an HTML template located at the specified path using the provided data, placeholders, and culture.
+        /// </summary>
         /// <typeparam name="T">The type for the data</typeparam>
         /// <param name="templatePath">The path to the template</param>
         /// <param name="data">The data</param>
         /// <param name="placeholders">The placeholders collection</param>
-        /// <param name="culture">TE culture to use</param>
+        /// <param name="culture">The culture to use</param>
         /// <param name="ct">A cancellation token</param>
         /// <returns></returns>
         string RenderHtml<T>(string templatePath, T data, IEnumerable<BasePlaceHolder<T>> placeholders,
@@ -126,15 +136,8 @@ namespace zPdfGenerator.Html
             }
             cancellationToken.ThrowIfCancellationRequested();
 
-            var threadCulture = CultureInfo.CurrentCulture;
-            var threadUICulture = CultureInfo.CurrentUICulture;
-
-            try
+            using (CultureScope.Use(builder.CultureInfo))
             {
-
-                CultureInfo.CurrentCulture = builder.CultureInfo;
-                CultureInfo.CurrentUICulture = builder.CultureInfo;
-
                 _logger.LogInformation("Starting the population for the template {TemplatePath)}", Path.GetFileName(builder.TemplatePath));
 
                 var sw = Stopwatch.StartNew();
@@ -158,11 +161,6 @@ namespace zPdfGenerator.Html
                 _logger.LogInformation("Finished the conversion to PDF in {ElapsedMilliseconds} ms", sw.ElapsedMilliseconds);
 
                 return pdf;
-            }
-            finally
-            {
-                CultureInfo.CurrentCulture = threadCulture;
-                CultureInfo.CurrentUICulture = threadUICulture;
             }
         }
 
@@ -191,15 +189,8 @@ namespace zPdfGenerator.Html
             }
             cancellationToken.ThrowIfCancellationRequested();
 
-            var threadCulture = CultureInfo.CurrentCulture;
-            var threadUICulture = CultureInfo.CurrentUICulture;
-
-            try
+            using (CultureScope.Use(culture))
             {
-
-                CultureInfo.CurrentCulture = culture;
-                CultureInfo.CurrentUICulture = culture;
-
                 _logger.LogInformation("Starting the population for the template {TemplatePath)}", Path.GetFileName(templatePath));
 
                 var sw = Stopwatch.StartNew();
@@ -224,11 +215,45 @@ namespace zPdfGenerator.Html
 
                 return pdf;
             }
-            finally
+        }
+
+        /// <summary>
+        /// Renders an HTML template located at the specified path using the provided data, placeholders, and culture.
+        /// </summary>
+        /// <typeparam name="T">The type of the model to be rendered in the PDF document.</typeparam>
+        /// <param name="configure">An action that configures the PDF generation process for the specified model type.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used to cancel the PDF generation operation.</param>
+        /// <returns>A byte array containing the generated PDF document. Returns an empty array if the generation fails.</returns>
+        public string RenderHtml<T>(Action<FluidHtmlPdfGeneratorBuilder<T>> configure, CancellationToken cancellationToken = default)
+        {
+            if (configure is null) throw new ArgumentNullException(nameof(configure));
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var builder = new FluidHtmlPdfGeneratorBuilder<T>();
+            configure(builder);
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (string.IsNullOrWhiteSpace(builder.TemplatePath))
+                throw new InvalidOperationException("TemplatePath must be configured in FormPdfGeneratorBuilder.");
+
+            if (builder.DataItem == null)
+                throw new InvalidOperationException("DataItem must be set up in FormPdfGeneratorBuilder.");
+
+            if (builder.PlaceHolders == null)
+                throw new InvalidOperationException("PlaceHolders must be set up in FormPdfGeneratorBuilder.");
+
+            _logger.LogInformation("Starting PDF form generation using template {TemplatePath}.", builder.TemplatePath);
+
+            if (!PdfHelpers.LoadLicenseFile(builder.LicensePath))
             {
-                CultureInfo.CurrentCulture = threadCulture;
-                CultureInfo.CurrentUICulture = threadUICulture;
+                _logger.LogWarning("No license file found or wrong path. Using itext AGPL mode.");
             }
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var model = BuildModel(builder.DataItem, builder.PlaceHolders, builder.CultureInfo);
+            return RenderHtml(builder.TemplatePath, model, builder.CultureInfo, cancellationToken);
         }
 
         /// <summary>

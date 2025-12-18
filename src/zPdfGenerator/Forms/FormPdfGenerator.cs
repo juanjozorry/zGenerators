@@ -5,10 +5,10 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using zPdfGenerator.Globalization;
 
 namespace zPdfGenerator.Forms
 {
@@ -98,15 +98,8 @@ namespace zPdfGenerator.Forms
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            var threadCulture = CultureInfo.CurrentCulture;
-            var threadUICulture = CultureInfo.CurrentUICulture;
-
-            try
+            using (CultureScope.Use(builder.CultureInfo))
             {
-
-                CultureInfo.CurrentCulture = builder.CultureInfo;
-                CultureInfo.CurrentUICulture = builder.CultureInfo;
-
                 _logger.LogInformation("Starting the population for the template {TemplatePath)}", Path.GetFileName(builder.TemplatePath));
 
                 var sw = Stopwatch.StartNew();
@@ -126,11 +119,6 @@ namespace zPdfGenerator.Forms
                         return stream.ToArray();
                     }
                 }
-            }
-            finally
-            {
-                CultureInfo.CurrentCulture = threadCulture;
-                CultureInfo.CurrentUICulture = threadUICulture;
             }
         }
 

@@ -64,7 +64,7 @@ namespace zPdfGenerator.Samples.Form
                     .AddCheckbox("Language 5 Check Box", i => i.Latin)
                     .AddText("Favourite Colour List Box", i => i.FavouriteColor));
 
-            File.WriteAllBytes(Path.Combine(AppContext.BaseDirectory, "SampleForm.pdf"), fileContents);
+            File.WriteAllBytes(Path.Combine(AppContext.BaseDirectory, "Form\\SampleForm.pdf"), fileContents);
 
             _logger.LogInformation("Finishing PoC");
         }
