@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\zPdfGenerator.Charts\zPdfGenerator.Charts.csproj" />
     <ProjectReference Include="..\..\zPdfGenerator\zPdfGenerator.csproj" />
   </ItemGroup>
 

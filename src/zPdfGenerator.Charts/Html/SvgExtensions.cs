@@ -1,5 +1,10 @@
-﻿using System;
+﻿using OxyPlot;
+using System;
+using System.Globalization;
+using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
+using zPdfGenerator.Globalization;
 
 namespace zPdfGenerator.Html
 {
@@ -53,6 +58,32 @@ namespace zPdfGenerator.Html
         {
             var idx = svg.IndexOf("<svg", StringComparison.OrdinalIgnoreCase);
             return idx >= 0 ? svg.Substring(idx).Trim() : svg;
+        }
+
+        /// <summary>
+        /// This method exports the PlotModel to an SVG string.
+        /// </summary>
+        /// <param name="model">The PlotModel with all the definition for the graphic</param>
+        /// <param name="width">The width for the graph. If null provided, we will assume 800 pixels.</param>
+        /// <param name="height">The height for the graph. If null provided, we will assume 450 pixels.</param>
+        /// <param name="culture">The culture for rendering the SVG.</param>
+        /// <returns>Returns an string with the SVG rendered.</returns>
+        internal static string ExportPlot(this PlotModel model, int? width, int? height, CultureInfo? culture)
+        {
+            using (CultureScope.Use(culture))
+            {
+                var exporter = new SvgExporter
+                {
+                    Width = width ?? 800,
+                    Height = height ?? 450,
+                    IsDocument = false,
+                };
+
+                using var ms = new MemoryStream();
+                exporter.Export(model, ms);
+                var rendered = Encoding.UTF8.GetString(ms.ToArray());
+                return rendered.RemoveXmlHeaders().MakeResponsive();
+            }
         }
     }
 }

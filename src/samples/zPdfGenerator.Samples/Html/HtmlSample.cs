@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using System.Globalization;
 using zPdfGenerator.Html;
+using zPdfGenerator.Html.FluidHtmlPlaceHolders;
 
 namespace zPdfGenerator.Samples.Html
 {
@@ -48,7 +49,8 @@ namespace zPdfGenerator.Samples.Html
                 .AddDate("ReportDate", i => i.Date)
                 .AddCollection("Metrics", i => i.Metrics)
                 .AddCollection("TableRows", i => i.TableRows)
-                .AddPieChart("chartSvg", i => i.TableRows, r => r.Concept, r => Convert.ToDouble(r.Value), "Prueba de tarta", "Leyenda", "{0:n0}", "{1}", paletteHex: new[] { "#2563EB", "#F59E0B", "#16A34A" }, overrideGlobalCultureInfo: new CultureInfo("en-US"));
+                .AddPieChart("chartSvg", i => i.TableRows, r => r.Concept, r => Convert.ToDouble(r.Value), overrideGlobalCultureInfo: new CultureInfo("en-US"),
+                    configuration: new PieChartConfig { Title = "Prueba de tarta", Legend = "Leyenda", InsideLabelFormat = "{0:n0}", OutsideLabelFormat = "{1}", PaletteHex = new[] { "#2563EB", "#F59E0B", "#16A34A" } });
 
             var htmlFileContents = _generator.RenderHtml<CorporateReport>(config);
             var pdfFileContents = _generator.GeneratePdf<CorporateReport>(config);
