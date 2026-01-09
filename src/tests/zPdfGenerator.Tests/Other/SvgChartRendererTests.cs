@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using zPdfGenerator.Html;
 
-namespace zPdfGenerator.Tests
+namespace zPdfGenerator.Tests.Other
 {
     public sealed class SvgChartRendererTests
     {

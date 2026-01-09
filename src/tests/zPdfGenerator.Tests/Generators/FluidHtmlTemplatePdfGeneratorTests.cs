@@ -4,7 +4,7 @@ using Xunit.Abstractions;
 using zPdfGenerator.Html;
 using zPdfGenerator.Html.FluidHtmlPlaceHolders;
 
-namespace zPdfGenerator.Tests
+namespace zPdfGenerator.Tests.Generators
 {
     public class HtmlPdfGeneratorTests
     {

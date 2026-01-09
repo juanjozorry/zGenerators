@@ -6,7 +6,7 @@ using Xunit.Abstractions;
 using zPdfGenerator.Forms;
 using zPdfGenerator.Forms.FormPlaceHolders;
 
-namespace zPdfGenerator.Tests
+namespace zPdfGenerator.Tests.Generators
 {
     public class FormPdfGeneratorTests
     {

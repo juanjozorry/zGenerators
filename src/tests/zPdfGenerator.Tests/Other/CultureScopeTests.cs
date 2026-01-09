@@ -2,7 +2,7 @@
 using Xunit;
 using zPdfGenerator.Globalization;
 
-namespace zPdfGenerator.Tests.Globalization
+namespace zPdfGenerator.Tests.Other
 {
     public sealed class CultureScopeTests
     {

@@ -1,16 +1,19 @@
 ﻿using Fluid;
 using Fluid.Filters;
+using iText.Layout.Element;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using zPdfGenerator.Globalization;
 using zPdfGenerator.Html.FluidFilters;
 using zPdfGenerator.Html.FluidHtmlPlaceHolders;
 using zPdfGenerator.Html.Helpers;
+using zPdfGenerator.PostProcessors;
 
 namespace zPdfGenerator.Html
 {
@@ -150,13 +153,8 @@ namespace zPdfGenerator.Html
 
                 _logger.LogInformation("Finished the population for the template {TemplatePath} in {ElapsedMilliseconds} ms", Path.GetFileName(builder.TemplatePath), sw.ElapsedMilliseconds);
 
-                if (renderedTemplate is null)
-                    throw new InvalidOperationException("Rendered template cannot be null");
-
-                cancellationToken.ThrowIfCancellationRequested();
-
                 var basePath = Path.GetDirectoryName(builder.TemplatePath) ?? AppContext.BaseDirectory;
-                var pdf = _htmlToPdfConverter.ConvertHtmlToPDF(renderedTemplate, basePath, cancellationToken);
+                byte[] pdf = ConvertRenderedTemplateToPdf(basePath, renderedTemplate, builder.PostProcessors, cancellationToken);
 
                 _logger.LogInformation("Finished the conversion to PDF in {ElapsedMilliseconds} ms", sw.ElapsedMilliseconds);
 
@@ -203,13 +201,9 @@ namespace zPdfGenerator.Html
 
                 _logger.LogInformation("Finished the population for the template {TemplatePath} in {ElapsedMilliseconds} ms", Path.GetFileName(templatePath), sw.ElapsedMilliseconds);
 
-                if (renderedTemplate is null)
-                    throw new InvalidOperationException("Rendered template cannot be null");
-
-                cancellationToken.ThrowIfCancellationRequested();
 
                 var basePath = Path.GetDirectoryName(templatePath) ?? AppContext.BaseDirectory;
-                var pdf = _htmlToPdfConverter.ConvertHtmlToPDF(renderedTemplate, basePath, cancellationToken);
+                var pdf = ConvertRenderedTemplateToPdf(basePath, renderedTemplate, null, cancellationToken);
 
                 _logger.LogInformation("Finished the conversion to PDF in {ElapsedMilliseconds} ms", sw.ElapsedMilliseconds);
 
@@ -340,5 +334,18 @@ namespace zPdfGenerator.Html
 
             return dict;
         }
+
+        private byte[] ConvertRenderedTemplateToPdf(string basePath, string? renderedTemplate, List<IPostProcessor>? postProcessors, CancellationToken cancellationToken)
+        {
+            if (renderedTemplate is null)
+                throw new InvalidOperationException("Rendered template cannot be null");
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var pdf = _htmlToPdfConverter.ConvertHtmlToPDF(renderedTemplate, basePath, cancellationToken);
+
+            return PostProcessorsHelper.RunPostProcessors(pdf, postProcessors, cancellationToken);
+        }
+
     }
 }
