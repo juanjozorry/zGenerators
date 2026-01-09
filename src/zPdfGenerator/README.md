@@ -1,5 +1,10 @@
 ﻿# zPdfGenerator
 
+![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
+![NuGet](https://img.shields.io/nuget/v/zPdfGenerator?color=blue)
+![NuGet (pre)](https://img.shields.io/nuget/vpre/zPdfGenerator?label=nuget-pre&color=orange)
+
+
 A lightweight, fluent, and extensible PDF generation toolkit for .NET.
 It provides two high-level generators and an extensible post-processing pipeline for advanced PDF operations.
 
