@@ -7,6 +7,20 @@ namespace zPdfGenerator.Tests.PostProcessors
     public class PasswordProtectPostProcessorTests
     {
         [Fact]
+        public void Process_Throws_WhenPasswordsMissing()
+        {
+            var pdf = TestHelpers.CreateMinimalPdf("Secret");
+
+            var ex1 = Assert.Throws<ArgumentNullException>(() =>
+                new PasswordProtectPostProcessor(masterPassword: "", userPassword: "user").Process(pdf, CancellationToken.None));
+            Assert.Contains("MasterPassword", ex1.Message);
+
+            var ex2 = Assert.Throws<ArgumentNullException>(() =>
+                new PasswordProtectPostProcessor(masterPassword: "master", userPassword: "").Process(pdf, CancellationToken.None));
+            Assert.Contains("UserPassword", ex2.Message);
+        }
+
+        [Fact]
         public void Process_EncryptsPdf_WithUserAndMasterPassword()
         {
             var pdf = TestHelpers.CreateMinimalPdf("Secret");

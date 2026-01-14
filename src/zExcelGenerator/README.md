@@ -21,6 +21,8 @@ Designed for clean, expressive, multi-sheet Excel report generation with support
   - [Two Columns Per Field](#two-columns-per-field)
   - [Async & CancellationToken](#async--cancellationtoken)
 - [Returning Excel from ASP.NET Core](#-returning-excel-from-aspnet-core)
+- [Testing](#-testing)
+- [Troubleshooting](#-troubleshooting)
 - [License](#-license)
 
 ---
@@ -166,6 +168,30 @@ return File(
     "report.xlsx"
 );
 ```
+
+---
+
+## Testing
+
+Run the unit tests:
+
+```bash
+dotnet test tests/zExcelGenerator.Tests/zExcelGenerator.Tests.csproj
+```
+
+Generate coverage (requires `coverlet.collector`):
+
+```bash
+dotnet test tests/zExcelGenerator.Tests/zExcelGenerator.Tests.csproj --collect:"XPlat Code Coverage"
+```
+
+---
+
+## Troubleshooting
+
+- Dates stored as text: provide a date format (e.g. `format: "dd/MM/yyyy"`) so ClosedXML stores a real date value.
+- Empty or missing headers: make sure each worksheet has at least one column configured.
+- Large reports: prefer fewer columns and avoid excessive string conversions inside selectors.
 
 ---
 

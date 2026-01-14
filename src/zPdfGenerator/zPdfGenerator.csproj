@@ -26,10 +26,10 @@
 
   <ItemGroup>
     <PackageReference Include="Fluid.Core" Version="2.31.0" />
-    <PackageReference Include="itext" Version="9.4.0" />
-    <PackageReference Include="itext.bouncy-castle-adapter" Version="9.4.0" />
+    <PackageReference Include="itext" Version="9.5.0" />
+    <PackageReference Include="itext.bouncy-castle-adapter" Version="9.5.0" />
     <PackageReference Include="itext.licensing.base" Version="4.2.4" />
-    <PackageReference Include="itext.pdfhtml" Version="6.3.0" />
+    <PackageReference Include="itext.pdfhtml" Version="6.3.1" />
 	<PackageReference Include="Microsoft.Extensions.DependencyModel" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.3" />
   </ItemGroup>

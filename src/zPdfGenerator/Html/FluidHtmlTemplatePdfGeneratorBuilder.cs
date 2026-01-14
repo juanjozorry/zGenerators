@@ -50,6 +50,11 @@ namespace zPdfGenerator.Html
         internal List<IPostProcessor> PostProcessors { get; } = new();
 
         /// <summary>
+        /// Gets the generation options used to control logging and resource access.
+        /// </summary>
+        public FluidHtmlPdfGenerationOptions GenerationOptions { get; } = new();
+
+        /// <summary>
         /// Assign the data item on which placeholders will be processed.
         /// </summary>
         public FluidHtmlPdfGeneratorBuilder<T> SetData(T data)
@@ -99,6 +104,55 @@ namespace zPdfGenerator.Html
         public FluidHtmlPdfGeneratorBuilder<T> UseCulture(CultureInfo culture)
         {
             CultureInfo = culture ?? CultureInfo.InvariantCulture;
+            return this;
+        }
+
+        /// <summary>
+        /// Configures generation options for logging and resource access.
+        /// </summary>
+        /// <param name="options">The options to use. Cannot be null.</param>
+        /// <returns>The current instance for method chaining.</returns>
+        public FluidHtmlPdfGeneratorBuilder<T> UseGenerationOptions(FluidHtmlPdfGenerationOptions options)
+        {
+            if (options is null) throw new ArgumentNullException(nameof(options));
+
+            GenerationOptions.LogRenderedHtml = options.LogRenderedHtml;
+            GenerationOptions.RenderedHtmlLogMaxLength = options.RenderedHtmlLogMaxLength;
+            GenerationOptions.ResourceAccessPolicy = options.ResourceAccessPolicy;
+            return this;
+        }
+
+        /// <summary>
+        /// Enables or disables logging of rendered HTML at debug level.
+        /// </summary>
+        /// <param name="enabled">True to log rendered HTML; otherwise false.</param>
+        /// <returns>The current instance for method chaining.</returns>
+        public FluidHtmlPdfGeneratorBuilder<T> UseRenderedHtmlLogging(bool enabled)
+        {
+            GenerationOptions.LogRenderedHtml = enabled;
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the maximum number of characters to log for rendered HTML.
+        /// </summary>
+        /// <param name="maxLength">The maximum number of characters to log. Must be greater than zero.</param>
+        /// <returns>The current instance for method chaining.</returns>
+        public FluidHtmlPdfGeneratorBuilder<T> UseRenderedHtmlLogMaxLength(int maxLength)
+        {
+            if (maxLength <= 0) throw new ArgumentOutOfRangeException(nameof(maxLength), "Max length must be greater than zero.");
+            GenerationOptions.RenderedHtmlLogMaxLength = maxLength;
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the resource access policy used to restrict external resource loading.
+        /// </summary>
+        /// <param name="policy">The resource access policy. Null disables restrictions.</param>
+        /// <returns>The current instance for method chaining.</returns>
+        public FluidHtmlPdfGeneratorBuilder<T> UseResourceAccessPolicy(HtmlResourceAccessPolicy? policy)
+        {
+            GenerationOptions.ResourceAccessPolicy = policy;
             return this;
         }
 

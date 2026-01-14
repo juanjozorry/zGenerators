@@ -50,10 +50,37 @@ namespace zPdfGenerator.Tests.PostProcessors
         }
 
         [Fact]
+        public void Process_Throws_OnEmptyAdditionalKey()
+        {
+            var pdf = TestHelpers.CreateMinimalPdf();
+
+            var pp = new DocumentClassifierPostProcessor(
+                classification: ClassificationEnum.Public,
+                additionalValues: new Dictionary<string, string>
+                {
+                    [" "] = "value"
+                }
+            );
+
+            Assert.Throws<ArgumentException>(() =>
+                pp.Process(pdf, CancellationToken.None));
+        }
+
+        [Fact]
         public void LastPostProcessor_IsFalse()
         {
             var pp = new DocumentClassifierPostProcessor(ClassificationEnum.Public);
             Assert.False(pp.LastPostProcessor);
+        }
+
+        [Fact]
+        public void Process_Throws_WhenClassificationIsNull()
+        {
+            var pdf = TestHelpers.CreateMinimalPdf();
+            var pp = new DocumentClassifierPostProcessor(classification: null);
+
+            Assert.Throws<ArgumentNullException>(() =>
+                pp.Process(pdf, CancellationToken.None));
         }
     }
 }

@@ -85,6 +85,14 @@ zg-templates preview Templates/Invoice.html --watch
 
 ---
 
+## Output and file layout
+
+- The tool expects a sibling `*.sample.json` next to the HTML template.
+- Rendered HTML is written to a temporary location and opened in the browser unless `--no-open` is set.
+- Use `--pdf` to generate a PDF output for quick visual checks.
+
+---
+
 ## Template conventions
 
 ### HTML template
@@ -120,6 +128,21 @@ Use **Fluid / Liquid syntax**:
 
 ---
 
+## Troubleshooting
+
+- If nothing renders, confirm the `*.sample.json` file name matches the HTML file name.
+- If the browser does not open, run with `--no-open` and open the generated file manually.
+- For watch mode, save both the HTML and JSON to trigger re-rendering.
+
+---
+
+## Security Notes
+
+- Treat templates and sample data as trusted local files.
+- Avoid opening untrusted HTML with external resource links unless you understand the risks.
+
+---
+
 ## Design goals
 
 - No strong typing
@@ -127,6 +150,14 @@ Use **Fluid / Liquid syntax**:
 - No coupling to PDF generation
 - Works with **any HTML template**
 - Optimized for **template authoring and previewing**
+
+---
+
+## Testing
+
+```bash
+dotnet test tests/zPdfGenerator.Tests/zPdfGenerator.Tests.csproj
+```
 
 ---
 

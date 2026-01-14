@@ -7,6 +7,18 @@ namespace zPdfGenerator.Tests.PostProcessors
     public class PfxDigitalSignaturePostProcessorTests
     {
         [Fact]
+        public void Constructor_Throws_OnNullOrEmptyPfx()
+        {
+            var options = new PdfSignatureOptions(pfxPassword: "secret", fieldName: "Signature1");
+
+            Assert.Throws<ArgumentNullException>(() =>
+                new PfxDigitalSignaturePostProcessor(null!, options));
+
+            Assert.Throws<ArgumentException>(() =>
+                new PfxDigitalSignaturePostProcessor(Array.Empty<byte>(), options));
+        }
+
+        [Fact]
         public void Process_SignsPdf_AndSignatureIsPresent()
         {
             var pdf = TestHelpers.CreateMinimalPdf("Sign me!");

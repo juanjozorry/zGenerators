@@ -59,8 +59,13 @@ namespace zPdfGenerator.Samples.Html
                 visible: false
             );
 
+            var resourcePolicy = new HtmlResourceAccessPolicy()
+                .AllowSchemes("file", "https");
+
             Action<FluidHtmlPdfGeneratorBuilder<CorporateReport>> config = b => b
                 .UseTemplatePath(Path.Combine(AppContext.BaseDirectory, "Html", "template.html"))
+                .UseResourceAccessPolicy(resourcePolicy)
+                .UseRenderedHtmlLogMaxLength(2000)
                 .UseCulture(new CultureInfo("es-ES"))
                 .SetData(report)
                 .AddText("Subtitle", i => i.Subtitle)
