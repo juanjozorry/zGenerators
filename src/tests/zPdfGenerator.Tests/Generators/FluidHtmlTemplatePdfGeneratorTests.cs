@@ -4,7 +4,7 @@ using Xunit.Abstractions;
 using zPdfGenerator.Html;
 using zPdfGenerator.Html.FluidHtmlPlaceHolders;
 
-namespace zPdfGenerator.Tests
+namespace zPdfGenerator.Tests.Generators
 {
     public class HtmlPdfGeneratorTests
     {
@@ -62,7 +62,7 @@ namespace zPdfGenerator.Tests
                     .AddText("CustomerName", i => i.Customer.Name)
                     .AddCultureNumericAndText(
                         "TotalFormatted",
-                        i => new NumericAndTextValue(i.Total, i.Currency))
+                        i => new NumericAndTextValue(i.Total, i.Currency), "N2")
                     .AddFlag("ShowDiscounts", i => i.DiscountTotal > 0)
                     .AddCollection("Lines", i => i.Lines);
             });

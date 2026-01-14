@@ -5,48 +5,58 @@ using System.Globalization;
 namespace zPdfGenerator.Html.FluidHtmlPlaceHolders
 {
     /// <summary>
-    /// This class holds configuration for pie chart rendering.
+    /// This class holds configuration for bar chart rendering.
     /// </summary>
-    public class PieChartConfig
+    public class BarChartConfig
     {
         /// <summary>
-        /// The title for the pie chart.
+        /// The title for the bar chart.
         /// </summary>
         public string Title { get; set; } = string.Empty;
 
         /// <summary>
-        /// An optional legend for the pie chart.
+        /// The optional legend for the bar chart.
         /// </summary>
         public string? Legend { get; set; }
-
-        /// <summary>
-        /// The format for the inside label. If null, no inside label is rendered.
-        /// </summary>
-        public string? InsideLabelFormat { get; set; }
-
-        /// <summary>
-        /// The format for the outside label. If null, no outside label is rendered.
-        /// </summary>
-        public string? OutsideLabelFormat { get; set; }
 
         /// <summary>
         /// The list of colors for the palette in hex format (e.g., "#FF5733"). If not provided, a default palette will be used.
         /// </summary>
         public IReadOnlyList<string>? PaletteHex { get; set; }
+
+        /// <summary>
+        /// The fill color in hex format (e.g., "#FF5733") for all bars. If set, this color overrides the palette.
+        /// </summary>
+        public string? FillColorHex { get; set; }
+
+        /// <summary>
+        /// The chart orientation.
+        /// </summary>
+        public BarChartOrientationEnum ChartOrientation { get; set; }
+
+        /// <summary>
+        /// The label placement.
+        /// </summary>
+        public LabelPlacementEnum LabelPlacement { get; set; }
+
+        /// <summary>
+        /// The label format. If null, no label is rendered.
+        /// </summary>
+        public string? LabelFormat { get; set; }
     }
     /// <summary>
     /// This placeholder is used to render a pie chart in HTML as SVG.
     /// </summary>
-    public class PieChartPlaceHolder<TBase, TItem> : BasePlaceHolder<TBase>
+    public class BarChartPlaceHolder<TBase, TItem> : BasePlaceHolder<TBase>
     {
         private readonly CultureInfo? overrideGlobalCultureInfo;
         private readonly Func<TBase, IEnumerable<TItem>> map;
         private readonly Func<TItem, string> label;
         private readonly Func<TItem, double> value;
-        private readonly PieChartConfig? configuration;
+        private readonly BarChartConfig? configuration;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PieChartPlaceHolder{TBase, TItem}"/> class.
+        /// Initializes a new instance of the <see cref="BarChartPlaceHolder{TBase, TItem}"/> class.
         /// </summary>
         /// <param name="name">The name.</param>
         /// <param name="map">The map.</param>
@@ -54,7 +64,7 @@ namespace zPdfGenerator.Html.FluidHtmlPlaceHolders
         /// <param name="value">A function to determine the value</param>
         /// <param name="configuration">The configuration for for the pie chart.</param>
         /// <param name="overrideGlobalCultureInfo">A culture if the general culture needs to be overriden</param>
-        public PieChartPlaceHolder(string name, Func<TBase, IEnumerable<TItem>> map, Func<TItem, string> label, Func<TItem, double> value, PieChartConfig? configuration = null, CultureInfo? overrideGlobalCultureInfo = null) : base(name)
+        public BarChartPlaceHolder(string name, Func<TBase, IEnumerable<TItem>> map, Func<TItem, string> label, Func<TItem, double> value, BarChartConfig? configuration = null, CultureInfo? overrideGlobalCultureInfo = null) : base(name)
         {
             this.overrideGlobalCultureInfo = overrideGlobalCultureInfo;
             this.map = map;
@@ -78,8 +88,8 @@ namespace zPdfGenerator.Html.FluidHtmlPlaceHolders
             IEnumerable<TItem> data = this.map(dataItem);
             if (data is null) return null;
 
-            return SvgChartRenderer.GeneratePieSvg(data, this.label, this.value, this.configuration?.InsideLabelFormat, this.configuration?.OutsideLabelFormat, this.configuration?.Title, this.configuration?.Legend, 
-                paletteHex: this.configuration?.PaletteHex, culture: this.overrideGlobalCultureInfo ?? culture);
+            return SvgChartRenderer.GenerateBarChartSvg(data, this.label, this.value, this.configuration?.FillColorHex, this.configuration?.ChartOrientation, this.configuration?.LabelPlacement, this.configuration?.LabelFormat, 
+                this.configuration?.Title, this.configuration?.Legend, culture: this.overrideGlobalCultureInfo ?? culture);
         }
     }
 }

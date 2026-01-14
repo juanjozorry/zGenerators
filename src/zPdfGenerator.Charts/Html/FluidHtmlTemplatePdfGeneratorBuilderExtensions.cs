@@ -26,18 +26,13 @@ namespace zPdfGenerator.Html
         /// placeholder. Cannot be null.</param>
         /// <param name="label">The function to extract the label for each pie chart segment.</param>
         /// <param name="value">The function to extract the value for each pie chart segment.</param>
-        /// <param name="title">The title of the pie chart.</param>
-        /// <param name="legend">The legend text for the pie chart. Can be null.</param>
-        /// <param name="insideLabelFormat">The format for the inside label.</param>
-        /// <param name="outsideLabelFormat">The format for the outside label.</param>
-        /// <param name="paletteHex">The hex codes for the pallete.</param>
+        /// <param name="configuration">The configuration of the pie chart.</param>
         /// <param name="overrideGlobalCultureInfo">The culture if the global culture info needs to be overriden.</param>
         /// <returns>The current <see cref="FluidHtmlPdfGeneratorBuilder{TBase}"/> instance, enabling method chaining.</returns>
         public static FluidHtmlPdfGeneratorBuilder<TBase> AddPieChart<TBase, TItem>(this FluidHtmlPdfGeneratorBuilder<TBase> builder, string name, Func<TBase, IEnumerable<TItem>> map, 
-            Func<TItem, string> label, Func<TItem, double> value, string title, string? legend = null, string? insideLabelFormat = null, string? outsideLabelFormat = null, 
-            IReadOnlyList<string>? paletteHex = null, CultureInfo? overrideGlobalCultureInfo = null)
+            Func<TItem, string> label, Func<TItem, double> value, PieChartConfig configuration, CultureInfo? overrideGlobalCultureInfo = null)
         {
-            builder.AddPlaceHolder(new PieChartPlaceHolder<TBase, TItem>(name, map, label, value, title, legend, insideLabelFormat, outsideLabelFormat, paletteHex, overrideGlobalCultureInfo));
+            builder.AddPlaceHolder(new PieChartPlaceHolder<TBase, TItem>(name, map, label, value, configuration, overrideGlobalCultureInfo));
             return builder;
         }
     }

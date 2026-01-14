@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using zPdfGenerator.Forms.FormPlaceHolders;
+using zPdfGenerator.PostProcessors;
 
 namespace zPdfGenerator.Forms
 {
@@ -41,6 +42,11 @@ namespace zPdfGenerator.Forms
         /// Gets the collection of placeholders associated with the current instance.
         /// </summary>
         internal List<BasePlaceHolder<T>> PlaceHolders { get; } = new();
+
+        /// <summary>
+        /// Gets the collection of post-processors applied after the main processing step.
+        /// </summary>
+        internal List<IPostProcessor> PostProcessors { get; } = new();
 
         /// <summary>
         /// Gets the list of form element names that should be removed during processing.
@@ -241,6 +247,67 @@ namespace zPdfGenerator.Forms
             {
                 FormElementsToRemove.AddRange(formElementName);
             }
+            return this;
+        }
+
+        /// <summary>
+        /// Adds a password protection post-processor to the PDF generation pipeline.
+        /// </summary>
+        /// <param name="masterPassword">The master password for the PDF.</param>
+        /// <param name="userPassword">The user password for opening the PDF.</param>
+        /// <returns>The current instance of <see cref="FormPdfGeneratorBuilder{T}"/>, enabling method chaining.</returns>
+        public FormPdfGeneratorBuilder<T> AddPostPasswordProtect(string masterPassword, string userPassword)
+        {
+            var passwordProcessor = new PasswordProtectPostProcessor(masterPassword, userPassword);
+            PostProcessors.Add(passwordProcessor);
+            return this;
+        }
+
+        /// <summary>
+        /// Adds a post-processing document classifier to the PDF generation pipeline using the specified classification
+        /// and optional additional values.
+        /// </summary>
+        /// <remarks>This method allows you to customize document classification after PDF generation.
+        /// Multiple classifiers can be added by calling this method multiple times.</remarks>
+        /// <param name="classification">The classification to apply to the generated document. Determines how the document will be categorized
+        /// during post-processing.</param>
+        /// <param name="additionalValues">An optional dictionary of additional key-value pairs to associate with the classification. Can be null if no
+        /// extra values are required.</param>
+        /// <returns>The current instance of <see cref="FormPdfGeneratorBuilder{T}"/>, enabling method chaining.</returns>
+        public FormPdfGeneratorBuilder<T> AddPostDocumentClassifier(ClassificationEnum classification, IDictionary<string, string>? additionalValues = null)
+        {
+            var classifierProcessor = new DocumentClassifierPostProcessor(classification, additionalValues);
+            PostProcessors.Add(classifierProcessor);
+            return this;
+        }
+
+        /// <summary>
+        /// Adds a digital signature to the generated PDF using a PFX certificate after the document is created.
+        /// </summary>
+        /// <remarks>This method applies the digital signature as a post-processing step after PDF
+        /// generation. The provided PFX certificate must contain a private key suitable for signing. If multiple
+        /// post-processors are added, the order of their execution may affect the final document.</remarks>
+        /// <param name="pfxBytes">A byte array containing the PFX (PKCS#12) certificate used to sign the PDF. Cannot be null.</param>
+        /// <param name="options">The options that configure the appearance and behavior of the digital signature. Cannot be null.</param>
+        /// <returns>The current <see cref="FormPdfGeneratorBuilder{T}"/> instance for method chaining.</returns>
+        public FormPdfGeneratorBuilder<T> AddPostPfxDigitalSignature(byte[] pfxBytes, PdfSignatureOptions options)
+        {
+            var signatureProcessor = new PfxDigitalSignaturePostProcessor(pfxBytes, options);
+            PostProcessors.Add(signatureProcessor);
+            return this;
+        }
+
+        /// <summary>
+        /// Adds a post-processing step to be applied after PDF generation.
+        /// </summary>
+        /// <remarks>Post-processors are executed in the order they are added. This method enables
+        /// customization of the PDF output by applying additional processing steps.</remarks>
+        /// <param name="postProcessor">An implementation of <see cref="IPostProcessor"/> that defines the post-processing logic to be executed.
+        /// Cannot be null.</param>
+        /// <returns>The current <see cref="FormPdfGeneratorBuilder{T}"/> instance to allow method chaining.</returns>
+        public FormPdfGeneratorBuilder<T> AddPostProcessor(IPostProcessor postProcessor)
+        {
+            PostProcessors.Add(postProcessor);
             return this;
         }
     }

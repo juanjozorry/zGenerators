@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using zPdfGenerator.Globalization;
+using zPdfGenerator.PostProcessors;
 
 namespace zPdfGenerator.Forms
 {
@@ -108,15 +109,21 @@ namespace zPdfGenerator.Forms
                 {
                     _logger.LogInformation("About to load template from {TemplatePath}", builder.TemplatePath);
 
-                    using (var pdf = new PdfDocument(new PdfReader(builder.TemplatePath), new PdfWriter(stream)))
+                    using (var pdfDocument = new PdfDocument(new PdfReader(builder.TemplatePath), new PdfWriter(stream)))
                     {
-                        PopulateFormWithData(builder, pdf, cancellationToken);
+                        PopulateFormWithData(builder, pdfDocument, cancellationToken);
 
                         _logger.LogInformation("Generated PDF, took {ElapsedMilliseconds}ms", sw.ElapsedMilliseconds);
-                        pdf.Close();
+                        pdfDocument.Close();
 
                         _logger.LogInformation($"Finished PDF form generation.");
-                        return stream.ToArray();
+                        var pdf = stream.ToArray();
+
+                        pdf = PostProcessorsHelper.RunPostProcessors(pdf, builder.PostProcessors, cancellationToken);
+
+                        _logger.LogInformation("Finished the PDF generation in {ElapsedMilliseconds} ms", sw.ElapsedMilliseconds);
+
+                        return pdf;
                     }
                 }
             }
