@@ -110,6 +110,14 @@ var pdfBytes = generator.GeneratePdf(config);
 
 ---
 
+## Configuration Tips
+
+- Use `FillColorHex` for a single-color bar chart; use `PaletteHex` for grouped or multi-series charts.
+- `LabelFormat` accepts standard numeric formats (e.g. `{0:0.##}`).
+- Prefer explicit `CultureInfo` when rendering numbers with decimal separators.
+
+---
+
 ## Culture and numeric formatting
 
 OxyPlot formats labels using `CultureInfo.CurrentCulture` at render time.
@@ -128,6 +136,21 @@ This guarantees:
 * Correct decimal separators
 * Correct percentage formatting
 * Independence from the operating system culture
+
+---
+
+## Limitations
+
+- Charts are static SVGs (no interactivity or animation).
+- Very large datasets can produce large SVGs; consider sampling or aggregating data.
+
+---
+
+## Testing
+
+```bash
+dotnet test tests/zPdfGenerator.Tests/zPdfGenerator.Tests.csproj
+```
 
 ---
 

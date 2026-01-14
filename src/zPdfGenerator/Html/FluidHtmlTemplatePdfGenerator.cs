@@ -149,12 +149,12 @@ namespace zPdfGenerator.Html
 
                 var renderedTemplate = RenderHtml(builder.TemplatePath, builder.DataItem, builder.PlaceHolders, builder.CultureInfo, cancellationToken);
 
-                _logger.LogDebug("Template after {Template}", renderedTemplate);
+                LogRenderedTemplate(renderedTemplate, builder.GenerationOptions);
 
                 _logger.LogInformation("Finished the population for the template {TemplatePath} in {ElapsedMilliseconds} ms", Path.GetFileName(builder.TemplatePath), sw.ElapsedMilliseconds);
 
                 var basePath = Path.GetDirectoryName(builder.TemplatePath) ?? AppContext.BaseDirectory;
-                byte[] pdf = ConvertRenderedTemplateToPdf(basePath, renderedTemplate, builder.PostProcessors, cancellationToken);
+                byte[] pdf = ConvertRenderedTemplateToPdf(basePath, renderedTemplate, builder.PostProcessors, builder.GenerationOptions, cancellationToken);
 
                 _logger.LogInformation("Finished the conversion to PDF in {ElapsedMilliseconds} ms", sw.ElapsedMilliseconds);
 
@@ -197,13 +197,65 @@ namespace zPdfGenerator.Html
 
                 var renderedTemplate = RenderHtml(templatePath, model, culture, cancellationToken);
 
-                _logger.LogDebug("Template after {Template}", renderedTemplate);
+                var generationOptions = new FluidHtmlPdfGenerationOptions();
+                LogRenderedTemplate(renderedTemplate, generationOptions);
 
                 _logger.LogInformation("Finished the population for the template {TemplatePath} in {ElapsedMilliseconds} ms", Path.GetFileName(templatePath), sw.ElapsedMilliseconds);
 
 
                 var basePath = Path.GetDirectoryName(templatePath) ?? AppContext.BaseDirectory;
-                var pdf = ConvertRenderedTemplateToPdf(basePath, renderedTemplate, null, cancellationToken);
+                var pdf = ConvertRenderedTemplateToPdf(basePath, renderedTemplate, null, generationOptions, cancellationToken);
+
+                _logger.LogInformation("Finished the conversion to PDF in {ElapsedMilliseconds} ms", sw.ElapsedMilliseconds);
+
+                return pdf;
+            }
+        }
+
+        /// <summary>
+        /// Generates a PDF document from the specified model using the provided options.
+        /// </summary>
+        /// <param name="templatePath">The path to the template</param>
+        /// <param name="licensePath">The path to the license file</param>
+        /// <param name="model">The model used to populate the template</param>
+        /// <param name="culture">The culture</param>
+        /// <param name="options">Generation options to control logging and resource access.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used to cancel the PDF generation operation.</param>
+        /// <returns>A byte array containing the generated PDF document.</returns>
+        public byte[] GeneratePdf(string templatePath, string? licensePath, IDictionary<string, object?> model, CultureInfo culture, FluidHtmlPdfGenerationOptions? options, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(templatePath))
+                throw new InvalidOperationException("TemplatePath must be configured.");
+
+            if (model is null)
+                throw new InvalidOperationException("Model must be set up.");
+
+            _logger.LogInformation("Starting PDF form generation using template {TemplatePath}.", templatePath);
+
+            if (!PdfHelpers.LoadLicenseFile(licensePath))
+            {
+                _logger.LogWarning("No license file found or wrong path. Using itext AGPL mode.");
+            }
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var normalizedOptions = NormalizeOptions(options);
+
+            using (CultureScope.Use(culture))
+            {
+                _logger.LogInformation("Starting the population for the template {TemplatePath)}", Path.GetFileName(templatePath));
+
+                var sw = Stopwatch.StartNew();
+
+                _logger.LogInformation("About to load template from {TemplatePath} with culture {Culture}", templatePath, culture.Name);
+
+                var renderedTemplate = RenderHtml(templatePath, model, culture, cancellationToken);
+
+                LogRenderedTemplate(renderedTemplate, normalizedOptions);
+
+                _logger.LogInformation("Finished the population for the template {TemplatePath} in {ElapsedMilliseconds} ms", Path.GetFileName(templatePath), sw.ElapsedMilliseconds);
+
+                var basePath = Path.GetDirectoryName(templatePath) ?? AppContext.BaseDirectory;
+                var pdf = ConvertRenderedTemplateToPdf(basePath, renderedTemplate, null, normalizedOptions, cancellationToken);
 
                 _logger.LogInformation("Finished the conversion to PDF in {ElapsedMilliseconds} ms", sw.ElapsedMilliseconds);
 
@@ -335,16 +387,51 @@ namespace zPdfGenerator.Html
             return dict;
         }
 
-        private byte[] ConvertRenderedTemplateToPdf(string basePath, string? renderedTemplate, List<IPostProcessor>? postProcessors, CancellationToken cancellationToken)
+        private byte[] ConvertRenderedTemplateToPdf(string basePath, string? renderedTemplate, List<IPostProcessor>? postProcessors, FluidHtmlPdfGenerationOptions options, CancellationToken cancellationToken)
         {
             if (renderedTemplate is null)
                 throw new InvalidOperationException("Rendered template cannot be null");
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            var pdf = _htmlToPdfConverter.ConvertHtmlToPDF(renderedTemplate, basePath, cancellationToken);
+            options.Validate();
+
+            byte[] pdf;
+            if (_htmlToPdfConverter is IHtmlToPdfConverterWithPolicy converterWithPolicy)
+            {
+                pdf = converterWithPolicy.ConvertHtmlToPDF(renderedTemplate, basePath, options.ResourceAccessPolicy, cancellationToken);
+            }
+            else
+            {
+                pdf = _htmlToPdfConverter.ConvertHtmlToPDF(renderedTemplate, basePath, cancellationToken);
+            }
 
             return PostProcessorsHelper.RunPostProcessors(pdf, postProcessors, cancellationToken);
+        }
+
+        private void LogRenderedTemplate(string renderedTemplate, FluidHtmlPdfGenerationOptions options)
+        {
+            if (!options.LogRenderedHtml) return;
+            if (!_logger.IsEnabled(LogLevel.Debug)) return;
+
+            options.Validate();
+
+            if (options.RenderedHtmlLogMaxLength.HasValue && renderedTemplate.Length > options.RenderedHtmlLogMaxLength.Value)
+            {
+                var maxLength = options.RenderedHtmlLogMaxLength.Value;
+                var truncated = renderedTemplate.Substring(0, maxLength) + "...(truncated)";
+                _logger.LogDebug("Template after {Template}", truncated);
+                return;
+            }
+
+            _logger.LogDebug("Template after {Template}", renderedTemplate);
+        }
+
+        private static FluidHtmlPdfGenerationOptions NormalizeOptions(FluidHtmlPdfGenerationOptions? options)
+        {
+            var normalizedOptions = options ?? new FluidHtmlPdfGenerationOptions();
+            normalizedOptions.Validate();
+            return normalizedOptions;
         }
 
     }

@@ -248,6 +248,32 @@ byte[] output = pdf.GeneratePdf(model, builder =>
 });
 ```
 
+### Logging and Resource Access Options
+
+You can control rendered HTML logging and restrict external resource loading (images, CSS, etc.) during HTML → PDF conversion.
+
+```csharp
+var resourcePolicy = new HtmlResourceAccessPolicy()
+    .AllowSchemes("file", "https")
+    .AllowHosts("cdn.example.com");
+
+byte[] output = pdf.GeneratePdf(model, builder =>
+{
+    builder
+        .UseTemplatePath("templates/Invoice.html")
+        .UseRenderedHtmlLogging(false)
+        .UseRenderedHtmlLogMaxLength(2000)
+        .UseResourceAccessPolicy(resourcePolicy)
+        .AddText("CustomerName", m => m.Name)
+        .AddNumeric("Total", m => m.Total);
+});
+```
+
+Notes:
+- `LogRenderedHtml` defaults to true (debug level). Disable it in production if templates contain sensitive data.
+- Resource allowlists are optional; if not set, the converter keeps the default iText behavior.
+- When using resource allowlists, iText's `SetResourceRetriever` currently relies on an obsolete `IResourceRetriever` type, which can emit compiler warnings. This is expected with the current iText API.
+
 ---
 
 ## Requirements
@@ -257,6 +283,36 @@ byte[] output = pdf.GeneratePdf(model, builder =>
 * BouncyCastle adapter
 * A fillable PDF AcroForm template (FormPdfGenerator)
 * A Fluid HTML template and CSS (FluidHtmlPdfGenerator)
+
+---
+
+## Security Notes
+
+- Do not render untrusted HTML or template paths without a resource allowlist.
+- Disable rendered HTML logging in production if templates contain sensitive data.
+- When using password protection and signatures together, apply protection before signing.
+
+---
+
+## Testing
+
+```bash
+dotnet test tests/zPdfGenerator.Tests/zPdfGenerator.Tests.csproj
+```
+
+Generate coverage:
+
+```bash
+dotnet test tests/zPdfGenerator.Tests/zPdfGenerator.Tests.csproj --collect:"XPlat Code Coverage"
+```
+
+---
+
+## Troubleshooting
+
+- Missing fields in AcroForm templates are skipped with a warning; check field names and casing.
+- HTML resources not loading: verify `basePath` and allowed schemes/hosts.
+- Unexpected number/date formatting: set `UseCulture` explicitly and avoid mixing cultures in templates.
 
 ---
 

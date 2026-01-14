@@ -212,6 +212,66 @@ namespace zPdfGenerator.Tests.Generators
                 }, cts.Token));
         }
 
+        [Fact]
+        public void GeneratePdf_FlattenFields_RemovesFormFields()
+        {
+            var generator = CreateGenerator();
+            var templatePath = CreateTemplatePdfWithFormFields();
+
+            var customer = new Customer
+            {
+                Name = "John Doe",
+                BirthDate = new DateTime(1985, 3, 12),
+                Balance = 1234.56m,
+                Total = 9876.54m,
+                Currency = "EUR"
+            };
+
+            var pdfBytes = generator.GeneratePdf<Customer>(builder =>
+            {
+                builder
+                    .UseTemplatePath(templatePath)
+                    .UseCulture(new CultureInfo("es-ES"))
+                    .SetData(customer)
+                    .AddText("Name", c => c.Name)
+                    .AddDate("BirthDate", c => c.BirthDate, "dd/MM/yyyy")
+                    .AddNumeric("Balance", c => c.Balance, "N2")
+                    .AddNumericAndText("TotalWithCurrency",
+                        c => new NumericAndTextValue(c.Total, c.Currency))
+                    .SetFlattenFields(true);
+            });
+
+            Assert.NotNull(pdfBytes);
+            Assert.NotEmpty(pdfBytes);
+
+            using var ms = new MemoryStream(pdfBytes);
+            using var pdf = new PdfDocument(new PdfReader(ms));
+            var form = PdfAcroForm.GetAcroForm(pdf, false);
+            if (form is not null)
+            {
+                Assert.Empty(form.GetAllFormFields());
+            }
+        }
+
+        [Fact]
+        public void GeneratePdf_Ignores_MissingFields_WhenRemoving()
+        {
+            var generator = CreateGenerator();
+            var templatePath = CreateTemplatePdfWithFormFields();
+
+            var pdfBytes = generator.GeneratePdf<Customer>(builder =>
+            {
+                builder
+                    .UseTemplatePath(templatePath)
+                    .SetData(new Customer { Name = "John Doe" })
+                    .AddText("Name", c => c.Name)
+                    .AddFormElementsToRemove("MissingField");
+            });
+
+            Assert.NotNull(pdfBytes);
+            Assert.NotEmpty(pdfBytes);
+        }
+
         #endregion
 
         #region Test support classes
