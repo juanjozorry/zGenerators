@@ -62,7 +62,7 @@ namespace zPdfGenerator.Tests.Generators
                     .AddText("CustomerName", i => i.Customer.Name)
                     .AddCultureNumericAndText(
                         "TotalFormatted",
-                        i => new NumericAndTextValue(i.Total, i.Currency))
+                        i => new NumericAndTextValue(i.Total, i.Currency), "N2")
                     .AddFlag("ShowDiscounts", i => i.DiscountTotal > 0)
                     .AddCollection("Lines", i => i.Lines);
             });
