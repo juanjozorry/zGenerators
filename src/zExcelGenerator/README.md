@@ -19,6 +19,7 @@ Designed for clean, expressive, multi-sheet Excel report generation with support
   - [Multiple Worksheets](#multiple-worksheets)
   - [Multiple Columns](#multiple-columns)
   - [Two Columns Per Field](#two-columns-per-field)
+  - [Template With Named Ranges](#template-with-named-ranges)
   - [Async & CancellationToken](#async--cancellationtoken)
 - [Returning Excel from ASP.NET Core](#-returning-excel-from-aspnet-core)
 - [Testing](#-testing)
@@ -140,6 +141,60 @@ workbook.AddWorksheet("Monthly", monthlyData, ws => ws
         secondFormat: "#,##0.00")
 );
 ```
+
+---
+
+### Template With Named Ranges
+
+Use an existing `.xlsx` template and fill named ranges.
+
+```csharp
+var invoice = new Invoice
+{
+    CustomerName = "Acme Corp",
+    Lines = new List<InvoiceLine>
+    {
+        new InvoiceLine { Sku = "A-01", Qty = 2, Price = 10.5m },
+        new InvoiceLine { Sku = "B-02", Qty = 1, Price = 5m }
+    }
+};
+
+byte[] excelBytes = generator.GenerateExcelFromTemplate(tpl => tpl
+    .UseTemplatePath("Templates/Invoice.xlsx")
+    .SetData(invoice)
+    .ForWorksheet("Cover", ws => ws
+        .NamedRange("CustomerName", x => x.CustomerName)
+        .NamedRange("InvoiceDate", x => x.Date, format: "dd/MM/yyyy"))
+    .ForWorksheet("Lines", ws => ws
+        .NamedRangeTable("LinesHeader", x => x.Lines, table => table
+            .Column("Sku", l => l.Sku, 1)
+            .Column("Qty", l => l.Qty, 2, format: "0")
+            .Column("Price", l => l.Price, 3, format: "#,##0.00"),
+            headerRowIsNamedRange: true,
+            writeHeaders: false,
+            insertRows: true))
+    .AddWorksheet("Summary", invoice.Lines, ws => ws
+        .Column("Sku", l => l.Sku, 1)
+        .Column("Qty", l => l.Qty, 2, format: "0"))
+);
+```
+
+Notes:
+- Named ranges must exist in the template or an exception is thrown.
+- `NamedRangeTable` anchors at the first cell of the named range.
+- Use `ForWorksheet` to scope mappings to a specific sheet.
+- `AddWorksheet` lets you append new worksheets on top of the template.
+- If `insertRows` is true and there is more than one item, rows are inserted below the anchor row.
+- Multi-range named ranges are supported; the same value/table is applied to each area.
+
+### Defining Named Ranges in Excel
+
+1. Select the cell or range.
+2. Go to **Formulas** → **Name Manager** → **New**.
+3. Set the name (e.g., `CustomerName`) and scope (Workbook or Worksheet).
+
+Sample project:
+- `src/samples/zExcelGenerator.Samples/README.md`
 
 ---
 

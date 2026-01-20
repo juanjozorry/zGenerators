@@ -37,6 +37,31 @@ namespace zExcelGenerator.Tests
             public List<decimal> Actual { get; set; } = new();
         }
 
+        private class TemplateModel
+        {
+            public string CompanyName { get; set; } = string.Empty;
+        }
+
+        private class Invoice
+        {
+            public List<InvoiceLine> Lines { get; set; } = new();
+        }
+
+        private class InvoiceLine
+        {
+            public string Sku { get; set; } = string.Empty;
+            public int Qty { get; set; }
+        }
+
+        private string SaveTemplate(Action<XLWorkbook> configure)
+        {
+            var path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.xlsx");
+            using var workbook = new XLWorkbook();
+            configure(workbook);
+            workbook.SaveAs(path);
+            return path;
+        }
+
         [Fact]
         public void GenerateExcel_SingleWorksheet_WithSimpleColumns_WritesHeadersAndData()
         {
@@ -450,6 +475,595 @@ namespace zExcelGenerator.Tests
 
             Assert.True(ws.Cell(1, 3).IsEmpty());
             Assert.True(ws.Cell(2, 3).IsEmpty());
+        }
+
+        [Fact]
+        public void GenerateExcelFromTemplate_NamedRange_SetsValueAcrossMultiRange()
+        {
+            var generator = CreateGenerator();
+
+            var templatePath = SaveTemplate(workbook =>
+            {
+                var ws = workbook.AddWorksheet("Main");
+                ws.Cell("A1").Value = "Old";
+                ws.Cell("C1").Value = "Old";
+
+                workbook.DefinedNames.Add("CompanyName", "Main!$A$1,Main!$C$1");
+            });
+
+            try
+            {
+                var model = new TemplateModel { CompanyName = "zGenerators" };
+
+                var bytes = generator.GenerateExcelFromTemplate(tpl => tpl
+                    .UseTemplatePath(templatePath)
+                    .SetData(model)
+                    .NamedRange("CompanyName", x => x.CompanyName));
+
+                using var workbookLoaded = LoadWorkbook(bytes);
+                var ws = workbookLoaded.Worksheet("Main");
+
+                Assert.Equal("zGenerators", ws.Cell("A1").GetString());
+                Assert.Equal("zGenerators", ws.Cell("C1").GetString());
+            }
+            finally
+            {
+                if (File.Exists(templatePath))
+                {
+                    File.Delete(templatePath);
+                }
+            }
+        }
+
+        [Fact]
+        public void GenerateExcelFromTemplate_NamedRangeTable_InsertsRowsBelowHeader()
+        {
+            var generator = CreateGenerator();
+
+            var templatePath = SaveTemplate(workbook =>
+            {
+                var ws = workbook.AddWorksheet("Report");
+                ws.Cell("A1").Value = "Sku";
+                ws.Cell("B1").Value = "Qty";
+                ws.Cell("A3").Value = "Footer";
+
+                workbook.DefinedNames.Add("LinesHeader", "Report!$A$1");
+            });
+
+            try
+            {
+                var invoice = new Invoice
+                {
+                    Lines = new List<InvoiceLine>
+                    {
+                        new InvoiceLine { Sku = "A-01", Qty = 2 },
+                        new InvoiceLine { Sku = "B-02", Qty = 5 }
+                    }
+                };
+
+                var bytes = generator.GenerateExcelFromTemplate(tpl => tpl
+                    .UseTemplatePath(templatePath)
+                    .SetData(invoice)
+                    .NamedRangeTable("LinesHeader", x => x.Lines, table => table
+                        .Column("Sku", l => l.Sku, 1)
+                        .Column("Qty", l => l.Qty, 2, format: "0")));
+
+                using var workbookLoaded = LoadWorkbook(bytes);
+                var ws = workbookLoaded.Worksheet("Report");
+
+                Assert.Equal("Sku", ws.Cell("A1").GetString());
+                Assert.Equal("Qty", ws.Cell("B1").GetString());
+
+                Assert.Equal("A-01", ws.Cell("A2").GetString());
+                Assert.Equal(2, ws.Cell("B2").GetValue<int>());
+                Assert.Equal("B-02", ws.Cell("A3").GetString());
+                Assert.Equal(5, ws.Cell("B3").GetValue<int>());
+
+                Assert.Equal("Footer", ws.Cell("A4").GetString());
+            }
+            finally
+            {
+                if (File.Exists(templatePath))
+                {
+                    File.Delete(templatePath);
+                }
+            }
+        }
+
+        [Fact]
+        public void GenerateExcelFromTemplate_ForWorksheet_MapsNamedRangesPerSheet()
+        {
+            var generator = CreateGenerator();
+
+            var templatePath = SaveTemplate(workbook =>
+            {
+                var cover = workbook.AddWorksheet("Cover");
+                var lines = workbook.AddWorksheet("Lines");
+
+                cover.Cell("B2").Value = "Old";
+                lines.Cell("B2").Value = "Old";
+
+                cover.DefinedNames.Add("CustomerName", cover.Range("B2"));
+                lines.DefinedNames.Add("CustomerName", lines.Range("B2"));
+            });
+
+            try
+            {
+                var model = new TemplateModel { CompanyName = "zGenerators" };
+
+                var bytes = generator.GenerateExcelFromTemplate(tpl => tpl
+                    .UseTemplatePath(templatePath)
+                    .SetData(model)
+                    .ForWorksheet("Cover", ws => ws
+                        .NamedRange("CustomerName", x => x.CompanyName))
+                    .ForWorksheet("Lines", ws => ws
+                        .NamedRange("CustomerName", x => x.CompanyName)));
+
+                using var workbookLoaded = LoadWorkbook(bytes);
+
+                Assert.Equal("zGenerators", workbookLoaded.Worksheet("Cover").Cell("B2").GetString());
+                Assert.Equal("zGenerators", workbookLoaded.Worksheet("Lines").Cell("B2").GetString());
+            }
+            finally
+            {
+                if (File.Exists(templatePath))
+                {
+                    File.Delete(templatePath);
+                }
+            }
+        }
+
+        [Fact]
+        public void GenerateExcelFromTemplate_AddWorksheet_AppendsNewSheet()
+        {
+            var generator = CreateGenerator();
+
+            var templatePath = SaveTemplate(workbook =>
+            {
+                var cover = workbook.AddWorksheet("Cover");
+                cover.Cell("B2").Value = "Old";
+                cover.DefinedNames.Add("CustomerName", cover.Range("B2"));
+            });
+
+            try
+            {
+                var model = new TemplateModel { CompanyName = "zGenerators" };
+                var lines = new List<InvoiceLine>
+                {
+                    new InvoiceLine { Sku = "A-01", Qty = 2 },
+                    new InvoiceLine { Sku = "B-02", Qty = 5 }
+                };
+
+                var bytes = generator.GenerateExcelFromTemplate(tpl => tpl
+                    .UseTemplatePath(templatePath)
+                    .SetData(model)
+                    .ForWorksheet("Cover", ws => ws
+                        .NamedRange("CustomerName", x => x.CompanyName))
+                    .AddWorksheet("Summary", lines, ws => ws
+                        .Column("Sku", l => l.Sku, 1)
+                        .Column("Qty", l => l.Qty, 2, format: "0")));
+
+                using var workbookLoaded = LoadWorkbook(bytes);
+                var cover = workbookLoaded.Worksheet("Cover");
+                var summary = workbookLoaded.Worksheet("Summary");
+
+                Assert.Equal("zGenerators", cover.Cell("B2").GetString());
+                Assert.Equal("Sku", summary.Cell(1, 1).GetString());
+                Assert.Equal("Qty", summary.Cell(1, 2).GetString());
+                Assert.Equal("A-01", summary.Cell(2, 1).GetString());
+                Assert.Equal(2, summary.Cell(2, 2).GetValue<int>());
+                Assert.Equal("B-02", summary.Cell(3, 1).GetString());
+                Assert.Equal(5, summary.Cell(3, 2).GetValue<int>());
+            }
+            finally
+            {
+                if (File.Exists(templatePath))
+                {
+                    File.Delete(templatePath);
+                }
+            }
+        }
+
+        [Fact]
+        public void GenerateExcelFromTemplate_ForWorksheet_ThrowsWhenNamedRangeMissingOnSheet()
+        {
+            var generator = CreateGenerator();
+
+            var templatePath = SaveTemplate(workbook =>
+            {
+                var cover = workbook.AddWorksheet("Cover");
+                cover.Cell("B2").Value = "Old";
+                cover.DefinedNames.Add("CustomerName", cover.Range("B2"));
+            });
+
+            try
+            {
+                var model = new TemplateModel { CompanyName = "zGenerators" };
+
+                Assert.Throws<InvalidOperationException>(() =>
+                {
+                    generator.GenerateExcelFromTemplate(tpl => tpl
+                        .UseTemplatePath(templatePath)
+                        .SetData(model)
+                        .ForWorksheet("Lines", ws => ws
+                            .NamedRange("CustomerName", x => x.CompanyName)));
+                });
+            }
+            finally
+            {
+                if (File.Exists(templatePath))
+                {
+                    File.Delete(templatePath);
+                }
+            }
+        }
+
+        [Fact]
+        public void GenerateExcelFromTemplate_NamedRangeTable_HeaderRowIsNamedRangeFalse_WritesHeadersAtNamedRangeRow()
+        {
+            var generator = CreateGenerator();
+
+            var templatePath = SaveTemplate(workbook =>
+            {
+                var ws = workbook.AddWorksheet("Lines");
+                ws.Cell("A4").Value = "Footer";
+                ws.DefinedNames.Add("LinesData", ws.Range("A2"));
+            });
+
+            try
+            {
+                var invoice = new Invoice
+                {
+                    Lines = new List<InvoiceLine>
+                    {
+                        new InvoiceLine { Sku = "A-01", Qty = 2 }
+                    }
+                };
+
+                var bytes = generator.GenerateExcelFromTemplate(tpl => tpl
+                    .UseTemplatePath(templatePath)
+                    .SetData(invoice)
+                    .NamedRangeTable("LinesData", x => x.Lines, table => table
+                        .Column("Sku", l => l.Sku, 1)
+                        .Column("Qty", l => l.Qty, 2, format: "0"),
+                        headerRowIsNamedRange: false,
+                        writeHeaders: true,
+                        insertRows: false));
+
+                using var workbookLoaded = LoadWorkbook(bytes);
+                var ws = workbookLoaded.Worksheet("Lines");
+
+                Assert.Equal("Sku", ws.Cell("A2").GetString());
+                Assert.Equal("Qty", ws.Cell("B2").GetString());
+                Assert.Equal("A-01", ws.Cell("A3").GetString());
+                Assert.Equal(2, ws.Cell("B3").GetValue<int>());
+                Assert.Equal("Footer", ws.Cell("A4").GetString());
+            }
+            finally
+            {
+                if (File.Exists(templatePath))
+                {
+                    File.Delete(templatePath);
+                }
+            }
+        }
+
+        [Fact]
+        public void GenerateExcelFromTemplate_NamedRangeTable_ThrowsWhenNoColumnsConfigured()
+        {
+            var generator = CreateGenerator();
+
+            var templatePath = SaveTemplate(workbook =>
+            {
+                var ws = workbook.AddWorksheet("Lines");
+                ws.DefinedNames.Add("LinesHeader", ws.Range("A1"));
+            });
+
+            try
+            {
+                var invoice = new Invoice
+                {
+                    Lines = new List<InvoiceLine>
+                    {
+                        new InvoiceLine { Sku = "A-01", Qty = 2 }
+                    }
+                };
+
+                Assert.Throws<InvalidOperationException>(() =>
+                {
+                    generator.GenerateExcelFromTemplate(tpl => tpl
+                        .UseTemplatePath(templatePath)
+                        .SetData(invoice)
+                        .NamedRangeTable("LinesHeader", x => x.Lines, _ => { }));
+                });
+            }
+            finally
+            {
+                if (File.Exists(templatePath))
+                {
+                    File.Delete(templatePath);
+                }
+            }
+        }
+
+        [Fact]
+        public void GenerateExcelFromTemplate_AddWorksheet_ThrowsWhenReportNameInvalid()
+        {
+            var generator = CreateGenerator();
+            var model = new TemplateModel { CompanyName = "zGenerators" };
+
+            Assert.Throws<ArgumentException>(() =>
+            {
+                generator.GenerateExcelFromTemplate(tpl => tpl
+                    .UseTemplatePath("Templates/Invoice.xlsx")
+                    .SetData(model)
+                    .AddWorksheet(" ", new List<InvoiceLine>(), ws => ws
+                        .Column("Sku", l => l.Sku, 1)));
+            });
+        }
+
+        [Fact]
+        public void GenerateExcelFromTemplate_AddWorksheet_ThrowsWhenItemsNull()
+        {
+            var generator = CreateGenerator();
+            var model = new TemplateModel { CompanyName = "zGenerators" };
+
+            Assert.Throws<ArgumentNullException>(() =>
+            {
+                generator.GenerateExcelFromTemplate(tpl => tpl
+                    .UseTemplatePath("Templates/Invoice.xlsx")
+                    .SetData(model)
+                    .AddWorksheet<InvoiceLine>("Summary", null!, ws => ws
+                        .Column("Sku", l => l.Sku, 1)));
+            });
+        }
+
+        [Fact]
+        public void GenerateExcelFromTemplate_ForWorksheet_ThrowsWhenWorksheetNameInvalid()
+        {
+            var generator = CreateGenerator();
+            var model = new TemplateModel { CompanyName = "zGenerators" };
+
+            Assert.Throws<ArgumentException>(() =>
+            {
+                generator.GenerateExcelFromTemplate(tpl => tpl
+                    .SetData(model)
+                    .ForWorksheet(" ", ws => ws
+                        .NamedRange("CustomerName", x => x.CompanyName)));
+            });
+        }
+
+        [Fact]
+        public void GenerateExcelFromTemplate_ThrowsWhenTemplatePathMissing()
+        {
+            var generator = CreateGenerator();
+            var model = new TemplateModel { CompanyName = "zGenerators" };
+
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                generator.GenerateExcelFromTemplate(tpl => tpl
+                    .SetData(model)
+                    .NamedRange("CustomerName", x => x.CompanyName));
+            });
+        }
+
+        [Fact]
+        public void GenerateExcelFromTemplate_ThrowsWhenModelMissing()
+        {
+            var generator = CreateGenerator();
+
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                generator.GenerateExcelFromTemplate(tpl => tpl
+                    .UseTemplatePath("Templates/Invoice.xlsx"));
+            });
+        }
+
+        [Fact]
+        public void GenerateExcelFromTemplate_ThrowsWhenNamedRangeMissing()
+        {
+            var generator = CreateGenerator();
+
+            var templatePath = SaveTemplate(workbook =>
+            {
+                workbook.AddWorksheet("Cover");
+            });
+
+            try
+            {
+                var model = new TemplateModel { CompanyName = "zGenerators" };
+
+                Assert.Throws<InvalidOperationException>(() =>
+                {
+                    generator.GenerateExcelFromTemplate(tpl => tpl
+                        .UseTemplatePath(templatePath)
+                        .SetData(model)
+                        .NamedRange("CustomerName", x => x.CompanyName));
+                });
+            }
+            finally
+            {
+                if (File.Exists(templatePath))
+                {
+                    File.Delete(templatePath);
+                }
+            }
+        }
+
+        [Fact]
+        public void GenerateExcelFromTemplate_ThrowsWhenNamedRangeTableMissing()
+        {
+            var generator = CreateGenerator();
+
+            var templatePath = SaveTemplate(workbook =>
+            {
+                workbook.AddWorksheet("Lines");
+            });
+
+            try
+            {
+                var invoice = new Invoice
+                {
+                    Lines = new List<InvoiceLine>
+                    {
+                        new InvoiceLine { Sku = "A-01", Qty = 2 }
+                    }
+                };
+
+                Assert.Throws<InvalidOperationException>(() =>
+                {
+                    generator.GenerateExcelFromTemplate(tpl => tpl
+                        .UseTemplatePath(templatePath)
+                        .SetData(invoice)
+                        .NamedRangeTable("LinesHeader", x => x.Lines, table => table
+                            .Column("Sku", l => l.Sku, 1)));
+                });
+            }
+            finally
+            {
+                if (File.Exists(templatePath))
+                {
+                    File.Delete(templatePath);
+                }
+            }
+        }
+
+        [Fact]
+        public void GenerateExcelFromTemplate_ForWorksheet_ThrowsWhenWorksheetNamedRangeExistsInOtherSheet()
+        {
+            var generator = CreateGenerator();
+
+            var templatePath = SaveTemplate(workbook =>
+            {
+                var cover = workbook.AddWorksheet("Cover");
+                cover.Cell("B2").Value = "Old";
+                cover.DefinedNames.Add("CustomerName", cover.Range("B2"));
+                workbook.AddWorksheet("Lines");
+            });
+
+            try
+            {
+                var model = new TemplateModel { CompanyName = "zGenerators" };
+
+                Assert.Throws<InvalidOperationException>(() =>
+                {
+                    generator.GenerateExcelFromTemplate(tpl => tpl
+                        .UseTemplatePath(templatePath)
+                        .SetData(model)
+                        .ForWorksheet("Lines", ws => ws
+                            .NamedRange("CustomerName", x => x.CompanyName)));
+                });
+            }
+            finally
+            {
+                if (File.Exists(templatePath))
+                {
+                    File.Delete(templatePath);
+                }
+            }
+        }
+
+        [Fact]
+        public void GenerateExcelFromTemplate_NamedRangeTable_InsertRowsFalse_DoesNotShiftFooter()
+        {
+            var generator = CreateGenerator();
+
+            var templatePath = SaveTemplate(workbook =>
+            {
+                var ws = workbook.AddWorksheet("Lines");
+                ws.Cell("A1").Value = "Sku";
+                ws.Cell("B1").Value = "Qty";
+                ws.Cell("A3").Value = "Footer";
+                workbook.DefinedNames.Add("LinesHeader", ws.Range("A1"));
+            });
+
+            try
+            {
+                var invoice = new Invoice
+                {
+                    Lines = new List<InvoiceLine>
+                    {
+                        new InvoiceLine { Sku = "A-01", Qty = 2 },
+                        new InvoiceLine { Sku = "B-02", Qty = 5 }
+                    }
+                };
+
+                var bytes = generator.GenerateExcelFromTemplate(tpl => tpl
+                    .UseTemplatePath(templatePath)
+                    .SetData(invoice)
+                    .NamedRangeTable("LinesHeader", x => x.Lines, table => table
+                        .Column("Sku", l => l.Sku, 1)
+                        .Column("Qty", l => l.Qty, 2, format: "0"),
+                        headerRowIsNamedRange: true,
+                        writeHeaders: false,
+                        insertRows: false));
+
+                using var workbookLoaded = LoadWorkbook(bytes);
+                var ws = workbookLoaded.Worksheet("Lines");
+
+                Assert.Equal("A-01", ws.Cell("A2").GetString());
+                Assert.Equal(2, ws.Cell("B2").GetValue<int>());
+                Assert.Equal("B-02", ws.Cell("A3").GetString());
+                Assert.Equal(5, ws.Cell("B3").GetValue<int>());
+                Assert.NotEqual("Footer", ws.Cell("A3").GetString());
+            }
+            finally
+            {
+                if (File.Exists(templatePath))
+                {
+                    File.Delete(templatePath);
+                }
+            }
+        }
+
+        [Fact]
+        public void GenerateExcelFromTemplate_NamedRangeTable_WriteHeadersFalse_DoesNotOverwriteTemplateHeaders()
+        {
+            var generator = CreateGenerator();
+
+            var templatePath = SaveTemplate(workbook =>
+            {
+                var ws = workbook.AddWorksheet("Lines");
+                ws.Cell("A1").Value = "TemplateSku";
+                ws.Cell("B1").Value = "TemplateQty";
+                workbook.DefinedNames.Add("LinesHeader", ws.Range("A1"));
+            });
+
+            try
+            {
+                var invoice = new Invoice
+                {
+                    Lines = new List<InvoiceLine>
+                    {
+                        new InvoiceLine { Sku = "A-01", Qty = 2 }
+                    }
+                };
+
+                var bytes = generator.GenerateExcelFromTemplate(tpl => tpl
+                    .UseTemplatePath(templatePath)
+                    .SetData(invoice)
+                    .NamedRangeTable("LinesHeader", x => x.Lines, table => table
+                        .Column("Sku", l => l.Sku, 1)
+                        .Column("Qty", l => l.Qty, 2, format: "0"),
+                        headerRowIsNamedRange: true,
+                        writeHeaders: false,
+                        insertRows: true));
+
+                using var workbookLoaded = LoadWorkbook(bytes);
+                var ws = workbookLoaded.Worksheet("Lines");
+
+                Assert.Equal("TemplateSku", ws.Cell("A1").GetString());
+                Assert.Equal("TemplateQty", ws.Cell("B1").GetString());
+                Assert.Equal("A-01", ws.Cell("A2").GetString());
+                Assert.Equal(2, ws.Cell("B2").GetValue<int>());
+            }
+            finally
+            {
+                if (File.Exists(templatePath))
+                {
+                    File.Delete(templatePath);
+                }
+            }
         }
 
         [Fact]

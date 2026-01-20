@@ -5,9 +5,9 @@ using System.Collections.Generic;
 namespace zExcelGenerator
 {
     /// <summary>
-    /// ExcelColumnMapper helper class to help us modelling the excel report.
+    /// ColumnMapper helper class to help us modelling the excel report.
     /// </summary>
-    public abstract class ExcelColumnMapper
+    public abstract class ColumnMapper
     {
         /// <summary>
         /// Gets or sets the column order.
@@ -35,12 +35,12 @@ namespace zExcelGenerator
     }
 
     /// <summary>
-    /// ExcelColumnMapper helper class to help us modelling the excel report.
-    /// Implements the <see cref="zExcelGenerator.ExcelColumnMapper" />
+    /// ColumnMapper helper class to help us modelling the excel report.
+    /// Implements the <see cref="zExcelGenerator.ColumnMapper" />
     /// </summary>
     /// <typeparam name="T">The type of the data.</typeparam>
-    /// <seealso cref="zExcelGenerator.ExcelColumnMapper" />
-    public class ExcelColumnMapper<T> : ExcelColumnMapper
+    /// <seealso cref="zExcelGenerator.ColumnMapper" />
+    public class ColumnMapper<T> : ColumnMapper
     {
         /// <summary>
         /// Gets or sets the field value. This is a function used to resolve the value for a given column.
@@ -50,12 +50,12 @@ namespace zExcelGenerator
     }
 
     /// <summary>
-    /// Class ExcelMultipleColumnMapper.
-    /// Implements the <see cref="zExcelGenerator.ExcelColumnMapper" />
+    /// Class MultipleColumnMapper.
+    /// Implements the <see cref="zExcelGenerator.ColumnMapper" />
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    /// <seealso cref="zExcelGenerator.ExcelColumnMapper" />
-    public class ExcelMultipleColumnMapper<T> : ExcelColumnMapper<T>
+    /// <seealso cref="zExcelGenerator.ColumnMapper" />
+    public class MultipleColumnMapper<T> : ColumnMapper<T>
     {
         /// <summary>
         /// Gets or sets the header description suffix.
@@ -78,11 +78,11 @@ namespace zExcelGenerator
 
     /// <summary>
     /// Class ExcelMultipleTwoColumnsMapper.
-    /// Implements the <see cref="zExcelGenerator.ExcelColumnMapper" />
+    /// Implements the <see cref="zExcelGenerator.ColumnMapper" />
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    /// <seealso cref="zExcelGenerator.ExcelColumnMapper" />
-    public class ExcelMultipleTwoColumnsMapper<T> : ExcelMultipleColumnMapper<T>
+    /// <seealso cref="zExcelGenerator.ColumnMapper" />
+    public class MultipleTwoColumnsMapper<T> : MultipleColumnMapper<T>
     {
         /// <summary>
         /// Gets or sets if the second column should be shown.
