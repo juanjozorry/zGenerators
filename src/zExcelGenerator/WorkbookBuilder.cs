@@ -14,6 +14,7 @@ namespace zExcelGenerator
         private readonly ExcelGenerator _generator;
         private readonly XLWorkbook _workbook;
         private readonly CancellationToken _cancellationToken;
+        private readonly List<IWorksheetMapper> _mappers = new();
 
         /// <summary>
         /// Initializes a new instance of the WorkbookBuilder class using the specified Excel generator and workbook.
@@ -57,7 +58,7 @@ namespace zExcelGenerator
                 throw new InvalidOperationException($"Worksheet '{reportName}' has no columns configured.");
             }
 
-            _generator.GenerateWorksheet(_workbook, mappers, reportName, items, _cancellationToken, includeColumnHeaders);
+            _mappers.Add(new WorksheetMapper<T>(reportName, items, includeColumnHeaders, mappers));
 
             return this;
         }
@@ -67,6 +68,15 @@ namespace zExcelGenerator
         /// </summary>
         public WorkbookBuilder AddWorksheet<T>(string reportName, IEnumerable<T> items, Action<WorksheetBuilder<T>> configureColumns) 
             => AddWorksheet(reportName, items, includeColumnHeaders: true, configureColumns);
+
+        internal void ApplyMappers()
+        {
+            foreach (var mapper in _mappers)
+            {
+                _cancellationToken.ThrowIfCancellationRequested();
+                mapper.Apply(_generator, _workbook, _cancellationToken);
+            }
+        }
     }
 
     /// <summary>
@@ -75,7 +85,7 @@ namespace zExcelGenerator
     /// <typeparam name="T">Type for the elements in a worksheet.</typeparam>
     public sealed class WorksheetBuilder<T>
     {
-        private readonly List<ExcelColumnMapper> _mappers = new();
+        private readonly List<ColumnMapper> _mappers = new();
 
         /// <summary>
         /// Adds a simple collumn to the worksheet.
@@ -85,7 +95,7 @@ namespace zExcelGenerator
             if (string.IsNullOrWhiteSpace(description)) throw new ArgumentException("Description cannot be null or empty.", nameof(description));
             if (selector is null) throw new ArgumentNullException(nameof(selector)); 
 
-            _mappers.Add(new ExcelColumnMapper<T>
+            _mappers.Add(new ColumnMapper<T>
             {
                 Order = order,
                 Description = description,
@@ -100,7 +110,7 @@ namespace zExcelGenerator
         /// <summary>
         /// Allows to add an existing Mapper (ie, ExcelMultipleColumnMapper, ExcelMultipleTwoColumnsMapper, etc.).
         /// </summary>
-        public WorksheetBuilder<T> Mapper(ExcelColumnMapper mapper)
+        public WorksheetBuilder<T> Mapper(ColumnMapper mapper)
         {
             if (mapper is null) throw new ArgumentNullException(nameof(mapper)); 
             _mappers.Add(mapper);
@@ -121,7 +131,7 @@ namespace zExcelGenerator
             if (totalColumns <= 0)
                 throw new ArgumentOutOfRangeException(nameof(totalColumns), "TotalColumns must be greater than zero.");
 
-            var mapper = new ExcelMultipleColumnMapper<T>
+            var mapper = new MultipleColumnMapper<T>
             {
                 Order = order,
                 Description = description,
@@ -162,7 +172,7 @@ namespace zExcelGenerator
             if (secondSelector is null) throw new ArgumentNullException(nameof(secondSelector));
             if (totalColumns <= 0) throw new ArgumentOutOfRangeException(nameof(totalColumns), "TotalColumns must be greater than zero.");
 
-            var mapper = new ExcelMultipleTwoColumnsMapper<T>
+            var mapper = new MultipleTwoColumnsMapper<T>
             {
                 Order = order,
                 Description = firstDescription,
@@ -183,7 +193,38 @@ namespace zExcelGenerator
         }
 
 
-        internal IEnumerable<ExcelColumnMapper> BuildMappers()
+        internal IEnumerable<ColumnMapper> BuildMappers()
             => _mappers.OrderBy(m => m.Order).ToList();
+    }
+
+    internal interface IWorksheetMapper
+    {
+        void Apply(ExcelGenerator generator, XLWorkbook workbook, CancellationToken cancellationToken);
+    }
+
+    internal sealed class WorksheetMapper<T> : IWorksheetMapper, ITemplateMapper
+    {
+        private readonly string _reportName;
+        private readonly IEnumerable<T> _items;
+        private readonly bool _includeColumnHeaders;
+        private readonly IEnumerable<ColumnMapper> _mappers;
+
+        public WorksheetMapper(string reportName, IEnumerable<T> items, bool includeColumnHeaders, IEnumerable<ColumnMapper> mappers)
+        {
+            _reportName = reportName;
+            _items = items;
+            _includeColumnHeaders = includeColumnHeaders;
+            _mappers = mappers;
+        }
+
+        public void Apply(ExcelGenerator generator, XLWorkbook workbook, CancellationToken cancellationToken)
+        {
+            generator.GenerateWorksheet(workbook, _mappers, _reportName, _items, cancellationToken, _includeColumnHeaders);
+        }
+
+        public void Apply(ExcelGenerator generator, XLWorkbook workbook, object model, CancellationToken cancellationToken)
+        {
+            Apply(generator, workbook, cancellationToken);
+        }
     }
 }

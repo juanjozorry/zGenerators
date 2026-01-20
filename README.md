@@ -34,6 +34,8 @@ Supports:
 - Automatic column sizing  
 - Fluent report builder  
 - Async generation with cancellation tokens  
+- Template-based generation with named ranges  
+- Mixed template + new worksheet generation  
 
 **Documentation:**  
 [See zExcelGenerator README](./src/zExcelGenerator/README.md)
