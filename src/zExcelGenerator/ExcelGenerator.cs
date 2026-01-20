@@ -39,31 +39,12 @@ namespace zExcelGenerator
         {
             if (configure is null) throw new ArgumentNullException(nameof(configure));
 
-            cancellationToken.ThrowIfCancellationRequested();
-
-            using (var workbook = CreateWorkbook())
-            {
-                _logger.LogInformation("Starting Excel generation (fluent API).");
-
-                var builder = new WorkbookBuilder(this, workbook, cancellationToken);
-                configure(builder);
-
-                builder.ApplyMappers();
-
-                cancellationToken.ThrowIfCancellationRequested();
-
-                var result = ToByteArray(workbook);
-
-                _logger.LogInformation("Finished Excel generation (fluent API). File size: {Size} bytes.", result.Length);
-
-                return result;
-            }
+            return GenerateWorkbook(configure, cancellationToken, ToByteArray, "bytes");
         }
 
         /// <summary>
         /// Generates an Excel file based on a template.
         /// </summary>
-        /// <typeparam name="T">The model type used to populate the template.</typeparam>
         /// <param name="configure">Action to configure named ranges for the template.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>Array of bytes with the content of the file.</returns>
@@ -71,28 +52,7 @@ namespace zExcelGenerator
         {
             if (configure is null) throw new ArgumentNullException(nameof(configure));
 
-            cancellationToken.ThrowIfCancellationRequested();
-
-            var builder = new TemplateWorkbookBuilder(this, cancellationToken);
-            configure(builder);
-
-            var templatePath = builder.GetTemplatePathOrThrow();
-            _ = builder.GetModelOrThrow();
-
-            using (var workbook = CreateWorkbookFromTemplate(templatePath))
-            {
-                _logger.LogInformation("Starting Excel generation from template.");
-
-                builder.ApplyMappers(workbook);
-
-                cancellationToken.ThrowIfCancellationRequested();
-
-                var result = ToByteArray(workbook);
-
-                _logger.LogInformation("Finished Excel generation from template. File size: {Size} bytes.", result.Length);
-
-                return result;
-            }
+            return GenerateTemplateWorkbook(configure, cancellationToken, ToByteArray, "bytes");
         }
 
         /// <summary>
@@ -103,33 +63,14 @@ namespace zExcelGenerator
         /// <returns>Array of bytes with the content of the file.</returns>
         public Stream GenerateExcelAsStream(Action<WorkbookBuilder> configure, CancellationToken cancellationToken = default)
         {
-            if (configure is null) throw new ArgumentNullException(nameof(configure)); 
-            
-            cancellationToken.ThrowIfCancellationRequested();
+            if (configure is null) throw new ArgumentNullException(nameof(configure));
 
-            using (var workbook = CreateWorkbook())
-            {
-                _logger.LogInformation("Starting Excel generation (fluent API).");
-
-                var builder = new WorkbookBuilder(this, workbook, cancellationToken);
-                configure(builder);
-
-                builder.ApplyMappers();
-
-                cancellationToken.ThrowIfCancellationRequested();
-
-                var result = ToStream(workbook);
-
-                _logger.LogInformation("Finished Excel generation (fluent API). File size: {Size} bytes.", result.Length);
-
-                return result;
-            }
+            return GenerateWorkbook(configure, cancellationToken, ToStream, "stream");
         }
 
         /// <summary>
         /// Generates an Excel file based on a template.
         /// </summary>
-        /// <typeparam name="T">The model type used to populate the template.</typeparam>
         /// <param name="configure">Action to configure named ranges for the template.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>Stream with the content of the file.</returns>
@@ -137,28 +78,7 @@ namespace zExcelGenerator
         {
             if (configure is null) throw new ArgumentNullException(nameof(configure));
 
-            cancellationToken.ThrowIfCancellationRequested();
-
-            var builder = new TemplateWorkbookBuilder(this, cancellationToken);
-            configure(builder);
-
-            var templatePath = builder.GetTemplatePathOrThrow();
-            _ = builder.GetModelOrThrow();
-
-            using (var workbook = CreateWorkbookFromTemplate(templatePath))
-            {
-                _logger.LogInformation("Starting Excel generation from template.");
-
-                builder.ApplyMappers(workbook);
-
-                cancellationToken.ThrowIfCancellationRequested();
-
-                var result = ToStream(workbook);
-
-                _logger.LogInformation("Finished Excel generation from template. File size: {Size} bytes.", result.Length);
-
-                return result;
-            }
+            return GenerateTemplateWorkbook(configure, cancellationToken, ToStream, "stream");
         }
 
         /// <summary>
@@ -209,7 +129,25 @@ namespace zExcelGenerator
             worksheet.Columns().AdjustToContents();
 
             sw.Stop();
+
             _logger.LogInformation($"Finished worksheet {reportName} generation. Rows added {rowCount}. Elapsed {sw.ElapsedMilliseconds} ms.");
+        }
+
+        /// <summary>
+        /// Exports the excel to a file stream result.
+        /// </summary>
+        /// <param name="workbook">The workbook.</param>
+        /// <returns>Returns a FileStreamResult with the Excel contents</returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentException"></exception>
+        public static Stream ToStream(XLWorkbook workbook)
+        {
+            if (workbook == null) throw new ArgumentNullException(nameof(workbook));
+
+            var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            stream.Position = 0;
+            return stream;
         }
 
         /// <summary>
@@ -241,66 +179,6 @@ namespace zExcelGenerator
             {
                 workbook.SaveAs(memoryStream);
                 return memoryStream.ToArray();
-            }
-        }
-
-        /// <summary>
-        /// Exports the excel to a file stream result.
-        /// </summary>
-        /// <param name="workbook">The workbook.</param>
-        /// <returns>Returns a FileStreamResult with the Excel contents</returns>
-        /// <exception cref="ArgumentNullException"></exception>
-        /// <exception cref="ArgumentException"></exception>
-        public static Stream ToStream(XLWorkbook workbook)
-        {
-            if (workbook == null) throw new ArgumentNullException(nameof(workbook));
-
-            var stream = new MemoryStream();
-            workbook.SaveAs(stream);
-            stream.Position = 0;
-            return stream;
-        }
-
-        /// <summary>
-        /// Gets the proper numeric value.
-        /// </summary>
-        /// <param name="cell">The cell.</param>
-        /// <param name="originalColumnValue">The original column value.</param>
-        /// <returns>System.Object.</returns>
-        private void SetProperValue(IXLCell cell, object? originalColumnValue)
-        {
-            if (originalColumnValue is string && double.TryParse(originalColumnValue?.ToString(), NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out double decimalValue))
-            {
-                cell.Value = decimalValue;
-            }
-            if (originalColumnValue is string && DateTime.TryParse(originalColumnValue?.ToString(), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out DateTime dateTimeValue))
-            {
-                cell.Value = dateTimeValue;
-            }
-            else if (originalColumnValue is decimal decValue)
-            {
-                cell.Value = (double)decValue;
-
-            }
-            else if (originalColumnValue is int intValue)
-            {
-                cell.Value = intValue;
-            }
-            else if (originalColumnValue is double doubleValue)
-            {
-                cell.Value = doubleValue;
-            }
-            else if (originalColumnValue is DateTime dtValue)
-            {
-                cell.Value = dtValue;
-            }
-            else if (originalColumnValue is TimeSpan timeSpanValue)
-            {
-                cell.Value = timeSpanValue;
-            }
-            else
-            {
-                cell.Value = originalColumnValue?.ToString();
             }
         }
 
@@ -429,6 +307,129 @@ namespace zExcelGenerator
             }
 
             return row;
+        }
+
+        private TResult GenerateWorkbook<TResult>(Action<WorkbookBuilder> configure, CancellationToken cancellationToken, Func<XLWorkbook, TResult> export, string outputLabel)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            using (var workbook = CreateWorkbook())
+            {
+                _logger.LogInformation("Starting Excel generation (fluent API).");
+
+                var builder = new WorkbookBuilder(this, workbook, cancellationToken);
+                configure(builder);
+
+                builder.ApplyMappers();
+
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var result = export(workbook);
+
+                var outputSize = TryGetOutputSize(result);
+                if (outputSize.HasValue)
+                {
+                    _logger.LogInformation("Finished Excel generation (fluent API). Output: {Output}. Size: {Size} bytes.", outputLabel, outputSize.Value);
+                }
+                else
+                {
+                    _logger.LogInformation("Finished Excel generation (fluent API). Output: {Output}.", outputLabel);
+                }
+
+                return result;
+            }
+        }
+
+        private TResult GenerateTemplateWorkbook<TResult>(Action<TemplateWorkbookBuilder> configure, CancellationToken cancellationToken, Func<XLWorkbook, TResult> export, string outputLabel)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var builder = new TemplateWorkbookBuilder(this, cancellationToken);
+            configure(builder);
+
+            var templatePath = builder.GetTemplatePathOrThrow();
+            _ = builder.GetModelOrThrow();
+
+            using (var workbook = CreateWorkbookFromTemplate(templatePath))
+            {
+                _logger.LogInformation("Starting Excel generation from template.");
+
+                builder.ApplyMappers(workbook);
+
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var result = export(workbook);
+
+                var outputSize = TryGetOutputSize(result);
+                if (outputSize.HasValue)
+                {
+                    _logger.LogInformation("Finished Excel generation from template. Output: {Output}. Size: {Size} bytes.", outputLabel, outputSize.Value);
+                }
+                else
+                {
+                    _logger.LogInformation("Finished Excel generation from template. Output: {Output}.", outputLabel);
+                }
+
+                return result;
+            }
+        }
+
+        private static long? TryGetOutputSize<TResult>(TResult result)
+        {
+            if (result is byte[] bytes)
+            {
+                return bytes.Length;
+            }
+
+            if (result is Stream stream && stream.CanSeek)
+            {
+                return stream.Length;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Gets the proper numeric value.
+        /// </summary>
+        /// <param name="cell">The cell.</param>
+        /// <param name="originalColumnValue">The original column value.</param>
+        /// <returns>System.Object.</returns>
+        private void SetProperValue(IXLCell cell, object? originalColumnValue)
+        {
+            if (originalColumnValue is string && double.TryParse(originalColumnValue?.ToString(), NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out double decimalValue))
+            {
+                cell.Value = decimalValue;
+            }
+            if (originalColumnValue is string && DateTime.TryParse(originalColumnValue?.ToString(), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out DateTime dateTimeValue))
+            {
+                cell.Value = dateTimeValue;
+            }
+            else if (originalColumnValue is decimal decValue)
+            {
+                cell.Value = (double)decValue;
+
+            }
+            else if (originalColumnValue is int intValue)
+            {
+                cell.Value = intValue;
+            }
+            else if (originalColumnValue is double doubleValue)
+            {
+                cell.Value = doubleValue;
+            }
+            else if (originalColumnValue is DateTime dtValue)
+            {
+                cell.Value = dtValue;
+            }
+            else if (originalColumnValue is TimeSpan timeSpanValue)
+            {
+                cell.Value = timeSpanValue;
+            }
+            else
+            {
+                cell.Value = originalColumnValue?.ToString();
+            }
         }
     }
 }
