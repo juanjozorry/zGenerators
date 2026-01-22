@@ -3,7 +3,7 @@ name: Publish zPdfGenerator to NuGet
 on:
   push:
     tags:
-      - 'zPdfGenerator-v*'    # ej: zPdfGenerator-v1.2.3
+      - 'zPdfGenerator-v*'
 
 jobs:
   publish-core:
@@ -20,7 +20,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x' # o la que uses
+          dotnet-version: '8.0.x' 
 
       - name: Extract version from tag
         id: version
@@ -28,13 +28,20 @@ jobs:
           # github.ref_name = zPdfGenerator-v1.2.3
           TAG_NAME="${GITHUB_REF_NAME}"
           VERSION="${TAG_NAME#zPdfGenerator-v}"
+          BASE_VERSION="${VERSION%%-*}"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "base_version=$BASE_VERSION" >> $GITHUB_OUTPUT
 
       - name: Restore
         run: dotnet restore $PROJECT_PATH
 
       - name: Build
-        run: dotnet build $PROJECT_PATH --configuration Release --no-restore
+        run: |
+          dotnet build $PROJECT_PATH \
+            --configuration Release --no-restore \
+            -p:Version=${{ steps.version.outputs.version }} \
+            -p:AssemblyVersion=${{ steps.version.outputs.base_version }} \
+            -p:FileVersion=${{ steps.version.outputs.base_version }}
 
       - name: Pack
         run: |
@@ -42,7 +49,9 @@ jobs:
             --configuration Release \
             --no-build \
             -p:PackageVersion=${{ steps.version.outputs.version }} \
-            -p:Version=${{ steps.ver.outputs.version }} \
+            -p:Version=${{ steps.version.outputs.version }} \
+            -p:AssemblyVersion=${{ steps.version.outputs.base_version }} \
+            -p:FileVersion=${{ steps.version.outputs.base_version }} \
             -o ./artifacts/core
 
       - name: Push to NuGet
@@ -75,13 +84,20 @@ jobs:
         run: |
           TAG_NAME="${GITHUB_REF_NAME}"
           VERSION="${TAG_NAME#zPdfGenerator-v}"
+          BASE_VERSION="${VERSION%%-*}"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "base_version=$BASE_VERSION" >> $GITHUB_OUTPUT
 
       - name: Restore
         run: dotnet restore $PROJECT_PATH
 
       - name: Build
-        run: dotnet build $PROJECT_PATH -c Release --no-restore
+        run: |
+          dotnet build $PROJECT_PATH \
+            -c Release --no-restore \
+            -p:Version=${{ steps.ver.outputs.version }} \
+            -p:AssemblyVersion=${{ steps.ver.outputs.base_version }} \
+            -p:FileVersion=${{ steps.ver.outputs.base_version }}
 
       - name: Pack tools (force PackageReference)
         run: |
@@ -90,6 +106,8 @@ jobs:
             --no-build \
             -p:PackageVersion=${{ steps.ver.outputs.version }} \
             -p:Version=${{ steps.ver.outputs.version }} \
+            -p:AssemblyVersion=${{ steps.ver.outputs.base_version }} \
+            -p:FileVersion=${{ steps.ver.outputs.base_version }} \
             -p:UseProjectRefs=false \
             -p:ZPdfGeneratorVersion=${{ steps.ver.outputs.version }} \
             -o ./artifacts/tools
@@ -124,13 +142,20 @@ jobs:
         run: |
           TAG_NAME="${GITHUB_REF_NAME}"
           VERSION="${TAG_NAME#zPdfGenerator-v}"
+          BASE_VERSION="${VERSION%%-*}"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "base_version=$BASE_VERSION" >> $GITHUB_OUTPUT
 
       - name: Restore
         run: dotnet restore $PROJECT_PATH
 
       - name: Build
-        run: dotnet build $PROJECT_PATH -c Release --no-restore
+        run: |
+          dotnet build $PROJECT_PATH \
+            -c Release --no-restore \
+            -p:Version=${{ steps.ver.outputs.version }} \
+            -p:AssemblyVersion=${{ steps.ver.outputs.base_version }} \
+            -p:FileVersion=${{ steps.ver.outputs.base_version }}
 
       - name: Pack charts (force PackageReference)
         run: |
@@ -139,6 +164,8 @@ jobs:
             --no-build \
             -p:PackageVersion=${{ steps.ver.outputs.version }} \
             -p:Version=${{ steps.ver.outputs.version }} \
+            -p:AssemblyVersion=${{ steps.ver.outputs.base_version }} \
+            -p:FileVersion=${{ steps.ver.outputs.base_version }} \
             -p:UseProjectRefs=false \
             -p:ZPdfGeneratorVersion=${{ steps.ver.outputs.version }} \
             -o ./artifacts/charts
