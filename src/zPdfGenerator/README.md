@@ -41,6 +41,11 @@ Generates PDF documents from Fluid HTML templates and a strongly typed model.
 dotnet add package zPdfGenerator
 ```
 
+### Licensing note (iText)
+
+zPdfGenerator depends on iText packages, which are dual-licensed (AGPL/commercial).
+Ensure your usage complies with iText's license terms.
+
 ### Required for FormPdfGenerator
 
 ```bash

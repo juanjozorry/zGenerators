@@ -3,7 +3,7 @@
 
 The **zGenerators Suite** is a set of lightweight, extensible C# libraries designed to simplify the generation of Excel and PDF documents in .NET applications.
 
-This repository contains two core core components:
+This repository contains two core components:
 
 - **zExcelGenerator** — A fluent API for generating Excel reports using ClosedXML.
 - **zPdfGenerator** — A set of tools for generating PDFs from templates:
@@ -94,13 +94,19 @@ An extension for zPdfGenerator that adds *chart placeholders* (charts) for PDF g
 
 ---
 
-### 2. zPdfGenerator.TemplatePreview
+### 4. zPdfGenerator.TemplatePreview
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 ![NuGet](https://img.shields.io/nuget/v/zPdfGenerator.TemplatePreview?color=blue)
 ![NuGet (pre)](https://img.shields.io/nuget/vpre/zPdfGenerator.TemplatePreview?label=nuget-pre&color=orange)
 
 A tool to help debugging a HTML template in real time.
+
+Command:
+`zpg-templates`
+
+Quick install:
+`dotnet tool install -g zPdfGenerator.TemplatePreview`
 
 ---
 

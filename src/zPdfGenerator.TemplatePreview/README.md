@@ -38,7 +38,7 @@ dotnet tool install -g zPdfGenerator.TemplatePreview
 Verify installation:
 
 ```bash
-zg-templates --help
+zpg-templates --help
 ```
 
 ---
@@ -48,19 +48,19 @@ zg-templates --help
 ### Basic usage
 
 ```bash
-zg-templates preview Templates/Invoice.html
+zpg-templates preview Templates/Invoice.html
 ```
 
 ### Using a full path (with spaces)
 
 ```bash
-zg-templates preview "Templates/My Invoice.html"
+zpg-templates preview "Templates/My Invoice.html"
 ```
 
 ### Watch mode (recommended)
 
 ```bash
-zg-templates preview Templates/Invoice.html --watch
+zpg-templates preview Templates/Invoice.html --watch
 ```
 
 - Re-renders automatically when the HTML or JSON changes
@@ -80,7 +80,7 @@ zg-templates preview Templates/Invoice.html --watch
 Example:
 
 ```bash
-zg-templates preview Templates/Invoice.html --watch 
+zpg-templates preview Templates/Invoice.html --watch 
 ```
 
 ---

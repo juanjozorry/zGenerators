@@ -21,7 +21,6 @@
 
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
-	<UserSecretsId>e8bb63bd-be67-4e41-b3b8-f65c9c4fd88c</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
